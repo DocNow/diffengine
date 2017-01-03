@@ -1,0 +1,5 @@
+bleach
+pyyaml
+requests
+feedparser
+readability-lxml
