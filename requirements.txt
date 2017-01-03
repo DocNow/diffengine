@@ -2,4 +2,5 @@ bleach
 pyyaml
 requests
 feedparser
+simplediff
 readability-lxml

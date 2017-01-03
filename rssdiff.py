@@ -6,6 +6,7 @@ import bleach
 import logging
 import requests
 import feedparser
+import simplediff
 import readability
 
 from peewee import *
@@ -22,12 +23,12 @@ class Feed(Model):
 
     def get_latest(self):
         log = logging.getLogger(__name__)
-        log.info("fetching feed: %s", self.url)
+        log.debug("fetching feed: %s", self.url)
         feed = feedparser.parse(self.url)
         for e in feed.entries:
             entry, created = Entry.create_or_get(url=e.link, feed=self)
             if created:
-                log.info("found new entry: %s", e.link)
+                log.debug("found new entry: %s", e.link)
             entry.get_latest() 
 
     class Meta:
@@ -52,7 +53,7 @@ class Entry(Model):
             return
 
         log = logging.getLogger(__name__)
-        log.info("checking %s", self.url)
+        log.debug("checking %s", self.url)
         resp = requests.get(self.url)
         doc = readability.Document(resp.text)
         title = doc.title()
@@ -99,7 +100,7 @@ class EntryVersion(Model):
         resp = requests.post('https://pragma.archivelab.org', json=data)
         wayback_id = resp.json()['wayback_id']
         self.archive_url = "https://wayback.archive.org" + wayback_id
-        log.info("archived version at %s", self.archive_url)
+        log.debug("archived version at %s", self.archive_url)
         self.save()
 
     class Meta:
@@ -108,20 +109,23 @@ class EntryVersion(Model):
 
 def setup_logging():
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler("rssdiff.log")
-    fh.setLevel(logging.INFO)
+    fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
     logger.addHandler(fh)
     return logger
 
 
 def main():
-    logger = setup_logging()
+    log = setup_logging()
+    log.debug("starting up")
     db.connect()
     db.create_tables([Feed, Entry, EntryVersion], safe=True)
     for feed in config['feeds']:
         f, created = Feed.create_or_get(url=feed['url'], name=feed['name'])
+        if created:
+            log.debug("created new feed for %s", feed['url'])
         f.get_latest()
 
 
