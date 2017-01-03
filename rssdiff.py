@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import yaml
 import bleach
 import logging
@@ -39,8 +40,17 @@ class Entry(Model):
     checked = DateTimeField(default=datetime.now)
     feed = ForeignKeyField(Feed, related_name='entries')
 
+    def stale(self):
+        # TODO: do something fancy with created and checked
+        return True
+
     def get_latest(self):
-        # TODO: add logic to use created and checked to see if we need to pull
+        # TODO: maybe there's a better way to be nice to servers?
+        time.sleep(1)
+
+        if not self.stale():
+            return
+
         log = logging.getLogger(__name__)
         log.info("checking %s", self.url)
         resp = requests.get(self.url)
@@ -49,6 +59,7 @@ class Entry(Model):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["div", "p"], strip=True)
 
+        # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
         versions = versions.order_by(-EntryVersion.created)
         if len(versions) == 0:
@@ -56,6 +67,8 @@ class Entry(Model):
         else:
             lastv = versions[0]
 
+        # compare what we got against the latest version and create a 
+        # new version if it looks different, or is brand new (no last version)
         if not lastv or lastv.title != title or lastv.summary != summary:
             if lastv:
                 log.info("found a new version: %s", self.url)
@@ -64,6 +77,7 @@ class Entry(Model):
                 summary=summary,
                 entry=self
             )
+            version.archive()
 
         self.checked = datetime.now()
         self.save()
@@ -76,7 +90,18 @@ class EntryVersion(Model):
     title = CharField()
     summary = CharField()
     created = DateTimeField(default=datetime.now)
+    archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, related_name='versions')
+
+    def archive(self):
+        log = logging.getLogger(__name__)
+        data = {'url': self.entry.url}
+        resp = requests.post('https://pragma.archivelab.org', json=data)
+        wayback_id = resp.json()['wayback_id']
+        self.archive_url = "https://wayback.archive.org" + wayback_id
+        log.info("archived version at %s", self.archive_url)
+        self.save()
+
     class Meta:
         database = db
 
