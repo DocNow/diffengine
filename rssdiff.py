@@ -40,6 +40,7 @@ class Entry(Model):
     feed = ForeignKeyField(Feed, related_name='entries')
 
     def get_latest(self):
+        # TODO: add logic to use created and checked to see if we need to pull
         log = logging.getLogger(__name__)
         log.info("checking %s", self.url)
         resp = requests.get(self.url)
@@ -56,7 +57,7 @@ class Entry(Model):
             lastv = versions[0]
 
         if not lastv or lastv.title != title or lastv.summary != summary:
-            if not lastv:
+            if lastv:
                 log.info("found a new version: %s", self.url)
             version = EntryVersion.create(
                 title=title,
@@ -64,8 +65,8 @@ class Entry(Model):
                 entry=self
             )
 
-        entry.checked = datetime.now()
-        entry.save()
+        self.checked = datetime.now()
+        self.save()
 
     class Meta:
         database = db
