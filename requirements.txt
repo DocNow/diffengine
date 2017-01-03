@@ -1,6 +1,8 @@
 bleach
+peewee
 pyyaml
 requests
+selenium
 feedparser
 simplediff
 readability-lxml

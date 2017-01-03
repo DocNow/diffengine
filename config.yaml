@@ -1,3 +1,5 @@
 feeds:
-  - name: Washington Post
-    url: http://feeds.washingtonpost.com/rss/politics
+  #- name: Washington Post
+  #  url: http://feeds.washingtonpost.com/rss/politics
+  - name: Breitbart News
+    url: http://feeds.feedburner.com/breitbart

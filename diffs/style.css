@@ -1,0 +1,58 @@
+del {
+    background-color: pink;
+    text-decoration: none;
+}
+
+del p {
+  background-color: pink;
+    text-decoration: none;
+}
+
+ins {
+    background-color: lightgreen;
+    text-decoration: none;
+}
+
+ins p {
+    background-color: lightgreen;
+    text-decoration: none;
+}
+
+body {
+    font-size: 14pt;
+    margin: 0px;
+}
+
+.diff {
+    margin: 10%;
+}
+
+header {
+    text-align: center;
+    background-color: #eeeeee;
+    padding: 10px;
+    border-bottom: thin solid #dddddd;
+}
+
+header .archive {
+    margin-top: 10px;
+    vertical-align: middle;
+}
+
+.archive img {
+    vertical-align: bottom;
+    height: 25px;
+}
+
+.archive a {
+    text-decoration: none;
+}
+
+header .url {
+}
+
+.keep {
+  display: block;
+  border: thin solid black;
+  padding: 10px;
+}
