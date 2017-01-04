@@ -4,6 +4,7 @@ import os
 import time
 import yaml
 import bleach
+import codecs
 import logging
 import requests
 import selenium
@@ -62,8 +63,7 @@ class Entry(Model):
         doc = readability.Document(resp.text)
         title = doc.title()
         summary = doc.summary(html_partial=True)
-        summary = summary.replace("</p>", "\n\n")
-        summary = bleach.clean(summary, tags=[], strip=True)
+        summary = bleach.clean(summary, tags=["p", "div"], strip=True)
 
         # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
@@ -104,19 +104,20 @@ class Entry(Model):
             i += 1
 
     def _generate_diff(self, v1, v2):
-            html_path = self._generate_diff_html(v1, v2)
-            self._generate_diff_image(html_path)
+        html_path = self._generate_diff_html(v1, v2)
+        self._generate_diff_image(html_path)
 
     def _generate_diff_html(self, v1, v2):
         log = logging.getLogger(__name__)
         path = "diffs/%s-%s.html" % (v1.id, v2.id)
-        log.debug("creating html diff: %s", path)
         if os.path.isfile(path):
             return path
+        log.debug("creating html diff: %s", path)
         diff = simplediff.html_diff(v1.html, v2.html)
         html = """
             <html>
               <head>
+                <meta charset="UTF-8">
                 <title></title>
                 <link rel="stylesheet" href="style.css">
                 <script src="jquery.min.js"></script>
@@ -143,19 +144,22 @@ class Entry(Model):
                 v2.archive_url, _dt(v2.created),
                 diff
             )
-        open(path, "w").write(html)
+        codecs.open(path, "w", 'utf8').write(html)
         return path
 
     def _generate_diff_image(self, html_path):
         log = logging.getLogger(__name__)
         img_path = html_path.replace(".html", ".jpg")
+        if os.path.isfile(img_path):
+            return img_path
         log.debug("creating image screenshot %s", img_path)
-        driver = webdriver.PhantomJS()
+        phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
+        driver = webdriver.PhantomJS(phantomjs)
         driver.get(html_path)
         driver.save_screenshot(img_path)
         return img_path
 
-    class meta:
+    class Meta:
         database = db
 
 

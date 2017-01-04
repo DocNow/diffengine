@@ -1,5 +1,5 @@
 feeds:
-  #- name: Washington Post
-  #  url: http://feeds.washingtonpost.com/rss/politics
-  - name: Breitbart News
-    url: http://feeds.feedburner.com/breitbart
+  - name: Washington Post
+    url: http://feeds.washingtonpost.com/rss/politics
+    
+phantomjs: /usr/local/bin/phantomjs

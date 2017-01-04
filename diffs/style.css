@@ -52,7 +52,5 @@ header .url {
 }
 
 .keep {
-  display: block;
   border: thin solid black;
-  padding: 10px;
 }
