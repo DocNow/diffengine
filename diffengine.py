@@ -105,6 +105,9 @@ class Entry(Model):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
 
+        # convert non-breaking whitespace to real whitespace or else 
+        # changes to either can cause a visually meaningless diff
+        summary = summary.replace("\xa0", " ")
 
         # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
