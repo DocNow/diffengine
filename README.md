@@ -1,18 +1,20 @@
 Most newspapers make sure that what they print is as accurate as possible,
 because once the words are on paper, and the paper is in someone's hands,
-there's no changing it.
+there's no changing it. This involves attention to truthfulness, accuracy,
+objectivity, impartiality, fairness and public accountability--in short it is
+the work of professional journalism.
 
-The same is not true on the web, where stories can be quickly edited as new
-facts arrive, and more is learned. Many newspapers treat their website as a
+News stories on the web can be edited quickly as new facts arrive, and more is
+learned. Typos can be quickly fixed. Many newspapers treat their website as a
 place for their first drafts, which allows them to craft a story in near real
-time, while giving them the opportunity to be the first to publish a breaking
-story.
+time, in order to be the first to publish a breaking story.
 
 But news travels *fast* in social media. What if you don't subscribe to the
 print newspaper anymore? What if the news organization doesn't have a print
-edition? And what if that initial, perhaps flawed version goes viral, and it is
-the only version you ever read?  It's not exactly *fake news*, because there's
-no intent to mislead ...  but it may not have been the best news either.
+edition and is available only on the web? And what if that initial, perhaps
+flawed version goes viral, and it is the only version you ever read?  It's not
+necessarily *fake news*, because there's no intent to mislead ...  but it may
+not have been the best news either.
 
 ---
 

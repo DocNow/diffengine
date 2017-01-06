@@ -105,7 +105,7 @@ class Entry(Model):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
 
-        # these little cleanups might need to be broken out into a function
+        # little cleanups that should be in a function if they grow more
         summary = summary.replace("\xa0", " ")
         summary = summary.replace('“', '"')
         summary = summary.replace('”', '"')
