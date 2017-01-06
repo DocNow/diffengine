@@ -133,6 +133,7 @@ class Entry(Model):
                 log.info("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 diff.generate()
+                diff.tweet()
             else:
                 log.debug("found first version: %s", self.url)
 
@@ -198,7 +199,29 @@ class Diff(Model):
 
     def generate(self):
         self._generate_diff_html()
-        self._generate_diff_image()
+        self._generate_diff_images()
+
+    def tweet(self):
+        log = logging.getLogger(__name__)
+        if not twitter:
+            log.debug("twitter not configured")
+            return
+        elif self.tweeted:
+            log.debug("diff %s has already been tweeted", self.id)
+            return
+        status = self.new.title
+        if len(status) >= 85:
+            status = status[0:85] + "…"
+        if self.old.archive_url and self.new.archive_url:
+            status += " " + self.old.archive_url +  " -> " + self.new.archive_url
+        try:
+            twitter.update_with_media(self.thumbnail_path, status)
+            self.tweeted = datetime.utcnow()
+            log.info("tweeted %s", status)
+            self.save()
+        except Exception as e:
+            log.error("unable to tweet: %s", e)
+
 
     def _generate_diff_html(self):
         log = logging.getLogger(__name__)
@@ -218,17 +241,18 @@ class Diff(Model):
         )
         codecs.open(self.html_path, "w", 'utf8').write(html)
 
-    def _generate_diff_image(self):
+    def _generate_diff_images(self):
         log = logging.getLogger(__name__)
         if os.path.isfile(self.screenshot_path):
             return
-        log.debug("creating image screenshot %s", self.screenshot_path)
         if not hasattr(self, 'browser'):
             phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
             self.browser = webdriver.PhantomJS(phantomjs)
+        log.debug("creating image screenshot %s", self.screenshot_path)
         self.browser.set_window_size(1400, 1000)
         self.browser.get(self.html_path)
         self.browser.save_screenshot(self.screenshot_path)
+        log.debug("creating image thumbnail %s", self.thumbnail_path)
         self.browser.set_window_size(800, 400)
         self.browser.execute_script("clip()")
         self.browser.save_screenshot(self.thumbnail_path)
