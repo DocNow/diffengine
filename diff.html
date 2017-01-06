@@ -9,6 +9,11 @@
         // get the best clip we can find
         var c = getClip();
 
+        // if we can't find a clip leave the page alone
+        if (c.length == 0) {
+          return;
+        }
+
         // hide everything
         $('header').hide();
         $('.diff').children().hide();
