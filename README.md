@@ -9,10 +9,10 @@ the web as their place for working drafts, which allows them to craft a story in
 near real time, and gives them the opportunity of being the first to publish a
 breaking news story.
 
-But news travels fast in social media. What if you don't subscribe to the print
-newspaper anymore? And what if that initial, perhaps flawed version goes viral,
-and it is the only version you ever read? It's not exactly *fake news*, because
-there's no intent to mislead. But it may not be the best news either.
+But news travels *fast* in social media. What if you don't subscribe to the
+print newspaper anymore? And what if that initial, perhaps flawed version goes
+viral, and it is the only version you ever read? It's not exactly *fake news*,
+because there's no intent to mislead. But it may not be the best news either.
 
 ---
 
