@@ -78,7 +78,7 @@ class Entry(Model):
             return True
 
         # time since the entry was last checked
-        staleness = datetime.utcnow() - self.checked).seconds
+        staleness = (datetime.utcnow() - self.checked).seconds
 
         # ratio of staleness to hotness
         r = staleness / float(hotness)
