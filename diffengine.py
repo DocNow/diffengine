@@ -192,6 +192,10 @@ class Diff(Model):
     def screenshot_path(self):
         return self.html_path.replace(".html", ".jpg")
 
+    @property
+    def thumbnail_path(self):
+        return self.screenshot_path.replace('.jpg', '-thumb.jpg')
+
     def generate(self):
         self._generate_diff_html()
         self._generate_diff_image()
@@ -222,9 +226,12 @@ class Diff(Model):
         if not hasattr(self, 'browser'):
             phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
             self.browser = webdriver.PhantomJS(phantomjs)
-            self.browser.set_window_size(1400, 1000)
+        self.browser.set_window_size(1400, 1000)
         self.browser.get(self.html_path)
         self.browser.save_screenshot(self.screenshot_path)
+        self.browser.set_window_size(800, 400)
+        self.browser.execute_script("clip()")
+        self.browser.save_screenshot(self.thumbnail_path)
 
     class Meta:
         database = db

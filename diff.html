@@ -2,6 +2,49 @@
   <head>
     <meta charset="UTF-8"></meta>
     <title>{{ title }}</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+
+      function clip() {
+        // get the best clip we can find
+        var c = getClip();
+
+        // hide everything
+        $('header').hide();
+        $('.diff').children().hide();
+
+        // show our clip and its immediate siblings
+        c.show();
+        c.next().show();
+        c.prev().show();
+      }
+
+      function getClip() {
+        var p = null;
+        var largest = 0;
+        $("p").each(function(i, e) {
+          var len = changesLength(e);
+          if (len > largest) {
+            p = e;
+            largest = len;
+          }
+        });
+        return $(p);
+      }
+
+      function changesLength(p) {
+        return count(p, 'del') + count(p, 'ins');
+      }
+
+      function count(e, sel) {
+        var length = 0;
+        $(e).children(sel).each(function(i, c) {
+          length += $(c).text().length; 
+        });
+        return length;
+      }
+    </script>
+
     <style>
 
       body {
