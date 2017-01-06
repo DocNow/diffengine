@@ -197,7 +197,7 @@ class Diff(Model):
             return
         log.debug("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
-        tmpl = jinja2.Template(open("diff.html").read())
+        tmpl = jinja2.Template(codecs.open("diff.html", "r", "utf8").read())
         html = tmpl.render(
             title=self.new.title,
             url=self.old.entry.url,
