@@ -6,6 +6,7 @@ import time
 import yaml
 import bleach
 import codecs
+import jinja2
 import tweepy
 import logging
 import htmldiff
@@ -33,7 +34,7 @@ if config['twitter']:
 class Feed(Model):
     url = CharField(primary_key=True)
     name = CharField()
-    created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.utcnow)
 
     def get_latest(self):
         log = logging.getLogger(__name__)
@@ -49,9 +50,9 @@ class Feed(Model):
 
 
 class Entry(Model):
-    url = CharField(primary_key=True)
-    created = DateTimeField(default=datetime.now)
-    checked = DateTimeField(default=datetime.now)
+    url = CharField()
+    created = DateTimeField(default=datetime.utcnow)
+    checked = DateTimeField(default=datetime.utcnow)
     feed = ForeignKeyField(Feed, related_name='entries')
 
     def stale(self):
@@ -67,10 +68,12 @@ class Entry(Model):
             return True
 
         # time since the entry was created
-        hotness = (datetime.now() - self.created).seconds
+        hotness = (datetime.utcnow() - self.created).seconds
+        if hotness == 0:
+            return True
 
         # time since the entry was last checked
-        staleness = (datetime.now() - self.checked).seconds
+        staleness = (datetime.utcnow() - self.checked).seconds
 
         # ratio of staleness to hotness
         r = staleness / float(hotness)
@@ -113,97 +116,29 @@ class Entry(Model):
         versions = EntryVersion.select().where(EntryVersion.entry==self)
         versions = versions.order_by(-EntryVersion.created)
         if len(versions) == 0:
-            lastv = None
+            old = None
         else:
-            lastv = versions[0]
+            old = versions[0]
 
         # compare what we got against the latest version and create a 
         # new version if it looks different, or is brand new (no last version)
-        if not lastv or lastv.title != title or lastv.summary != summary:
-            version = EntryVersion.create(
+        diff = None
+        if not old or old.title != title or old.summary != summary:
+            new = EntryVersion.create(
                 title=title,
                 summary=summary,
                 entry=self
             )
-            version.archive()
-            if lastv:
-                log.info("found a new version: %s", self.url)
+            new.archive()
+            if old:
+                diff = Diff.create(old=old, new=new)
+                diff.generate()
             else:
                 log.debug("found first version: %s", self.url)
 
-        self.checked = datetime.now()
+        self.checked = datetime.utcnow()
         self.save()
-
-    def generate_diffs(self):
-        log = logging.getLogger(__name__)
-        if len(self.versions) < 2:
-            return
-        versions = EntryVersion.select().where(EntryVersion.entry==self)
-        versions = versions.order_by(EntryVersion.created)
-
-        i = 0
-        while i < len(versions) - 1:
-            self._generate_diff(versions[i], versions[i+1])
-            i += 1
-
-    def _generate_diff(self, v1, v2):
-        self._generate_diff_html(v1, v2)
-        self._generate_diff_image()
-
-    def _generate_diff_html(self, v1, v2):
-        log = logging.getLogger(__name__)
-        path = "diffs/%s-%s.html" % (v1.id, v2.id)
-        if os.path.isfile(path):
-            return path
-        log.debug("creating html diff: %s", path)
-        diff = htmldiff.render_html_diff(v1.html, v2.html)
-        # TODO: move this to geshi since we have that installed for htmldiff?
-        html = """
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <title></title>
-                <link rel="stylesheet" href="style.css">
-                <script src="jquery.min.js"></script>
-                <script src="clip.js"></script>
-                <script>
-                  $(function() {
-                    clip();
-                  });
-                </script>
-              </head>
-            <body>
-              <header>
-                <div class="url"><a href="%s">%s</a></div>
-                <div class="archive">
-                  <img src="ia.png"> 
-                  <a href="%s">%s</a> ≠ <a href="%s">%s</a>
-                </div>
-              </header>
-              <div class="diff">%s</div>
-            </body>
-            </html>""" % (
-                v1.entry.url, v1.entry.url,
-                v1.archive_url, _dt(v1.created),
-                v2.archive_url, _dt(v2.created),
-                diff
-            )
-        codecs.open(path, "w", 'utf8').write(html)
-        return path
-
-    def _generate_diff_image(self):
-        log = logging.getLogger(__name__)
-        img_path = self.screenshot_path
-        if os.path.isfile(img_path):
-            return img_path
-        log.debug("creating image screenshot %s", img_path)
-        if not hasattr(self, 'browser'):
-            phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
-            self.browser = webdriver.PhantomJS(phantomjs)
-            self.browser.set_window_size(1400, 1000)
-        self.browser.get(self.html_path)
-        self.browser.save_screenshot(img_path)
-        return img_path
+        return diff
 
     class Meta:
         database = db
@@ -212,21 +147,13 @@ class Entry(Model):
 class EntryVersion(Model):
     title = CharField()
     summary = CharField()
-    created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, related_name='versions')
 
     @property
     def html(self):
         return "<h1>%s</h1>\n\n%s" % (self.title, self.summary)
-
-    @property
-    def html_path(self):
-        return "diffs/%s-%s.html" % (v1.id, v2.id)
-
-    @property
-    def screenshot_path(self):
-        return self.html_path.replace(".html", ".jpg")
 
     def archive(self):
         log = logging.getLogger(__name__)
@@ -245,12 +172,131 @@ class EntryVersion(Model):
         database = db
 
 
-class Diff(model):
-    old = ForeignKeyField(EntryVersion)
-    new = ForeignKeyField(EntryVersion)
-    created = DateTimeField(default=datetime.now)
+class Diff(Model):
+    old = ForeignKeyField(EntryVersion, related_name="prev_diff")
+    new = ForeignKeyField(EntryVersion, related_name="next_diff")
+    created = DateTimeField(default=datetime.utcnow)
     tweeted = DateTimeField(null=True)
     blogged = DateTimeField(null=True)
+
+    @property
+    def html_path(self):
+        dir_name = "diffs/%s" % (self.old.entry.id % 53)
+        if not os.path.isdir(dir_name):
+            os.makedirs(dir_name)
+        return "%s/%s-%s.html" % (dir_name, self.old.id, self.new.id)
+
+    @property
+    def screenshot_path(self):
+        return self.html_path.replace(".html", ".jpg")
+
+    def generate(self, force=False):
+        self._generate_diff_html(force=force)
+        self._generate_diff_image(force=force)
+
+    def _generate_diff_html(self, force=False):
+        log = logging.getLogger(__name__)
+        if os.path.isfile(self.html_path) and not force:
+            return
+        log.debug("creating html diff: %s", self.html_path)
+        diff = htmldiff.render_html_diff(self.old.html, self.new.html)
+        # TODO: move this to genshi since we have that installed for htmldiff?
+#        html = """
+#            <html>
+#              <head>
+#                <meta charset="UTF-8">
+#                <title></title>
+#                <style>
+#                body {
+#                    font-size: 15pt;
+#                    margin: 0px;
+#                    background-color: white;
+#                }
+#
+#                del {
+#                    background-color: pink;
+#                    text-decoration: none;
+#                }
+#
+#                del p {
+#                    background-color: pink;
+#                    text-decoration: none;
+#                }
+#
+#                ins {
+#                    background-color: lightgreen;
+#                    text-decoration: none;
+#                }
+#
+#                ins p {
+#                    background-color: lightgreen;
+#                    text-decoration: none;
+#                }
+#
+#                .diff {
+#                    margin: 10%;
+#                }
+#
+#                header {
+#                    text-align: center;
+#                    background-color: #eeeeee;
+#                    padding: 10px;
+#                    border-bottom: thin solid #dddddd;
+#                }
+#
+#                header .archive {
+#                    margin-top: 10px;
+#                    vertical-align: middle;
+#                }
+#
+#                .archive a {
+#                    text-decoration: none;
+#                }
+#                </style>
+#              </head>
+#              <body>
+#              <header>
+#                <div class="url"><a href="%s">%s</a></div>
+#                <div class="archive">
+#                  <img src="ia.png"> 
+#                  <a href="%s">%s</a> ≠ <a href="%s">%s</a>
+#                </div>
+#              </header>
+#              <div class="diff">%s</div>
+#            </body>
+#            </html>""" % (
+#                self.old.entry.url, self.old.entry.url,
+#                self.old.archive_url, _dt(self.old.created),
+#                self.new.archive_url, _dt(self.new.created),
+#                diff
+#            )
+        tmpl = jinja2.Template(open("diff.html").read())
+        html = tmpl.render(
+            title=self.new.title,
+            url=self.old.entry.url,
+            old_url=self.old.archive_url,
+            old_time=self.old.created,
+            new_url=self.new.archive_url,
+            new_time=self.new.created,
+            diff=diff
+        )
+        codecs.open(self.html_path, "w", 'utf8').write(html)
+
+    def _generate_diff_image(self, force=False):
+        log = logging.getLogger(__name__)
+        if os.path.isfile(self.screenshot_path) and not force:
+            return
+        log.debug("creating image screenshot %s", self.screenshot_path)
+        if not hasattr(self, 'browser'):
+            phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
+            self.browser = webdriver.PhantomJS(phantomjs)
+            self.browser.set_window_size(1400, 1000)
+        self.browser.get(self.html_path)
+        self.browser.save_screenshot(self.screenshot_path)
+
+    class Meta:
+        database = db
+
 
 
 def setup_logging():
@@ -268,7 +314,7 @@ def main():
     log = setup_logging()
     log.debug("starting up")
     db.connect()
-    db.create_tables([Feed, Entry, EntryVersion], safe=True)
+    db.create_tables([Feed, Entry, EntryVersion, Diff], safe=True)
 
     for f in config['feeds']:
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
@@ -280,9 +326,7 @@ def main():
         
         # get latest content for each entry
         for entry in feed.entries:
-            entry.get_latest()
-            if len(entry.versions) > 1:
-                entry.generate_diffs()
+            diff = entry.get_latest()
 
     log.debug("shutting down")
 

@@ -1,5 +1,6 @@
 bleach
 genshi
+jinja2
 peewee
 pyyaml
 tweepy

@@ -1,0 +1,70 @@
+<html>
+  <head>
+    <meta charset="UTF-8"></meta>
+    <title>{{ title }}</title>
+    <style>
+
+      body {
+        font-size: 15pt;
+        margin: 0px;
+        background-color: white;
+      }
+
+      del {
+          background-color: pink;
+          text-decoration: none;
+      }
+
+      del p {
+          background-color: pink;
+          text-decoration: none;
+      }
+
+      ins {
+          background-color: lightgreen;
+          text-decoration: none;
+      }
+
+      ins p {
+          background-color: lightgreen;
+          text-decoration: none;
+      }
+
+      .diff {
+          margin: 10%;
+      }
+
+      header {
+          text-align: center;
+          background-color: #eeeeee;
+          padding: 10px;
+          border-bottom: thin solid #dddddd;
+      }
+
+      header .archive {
+          margin-top: 10px;
+          vertical-align: middle;
+      }
+
+      .archive a {
+          text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+
+    <header>
+      <div class="url"><a href="{{ url }}">{{ url }}</a></div>
+      <div class="archive">
+        <a href="{{ old_url }}">{{ old_time.strftime("%Y-%m-%d %H:%M:%S GMT") }}</a> 
+        ≠ 
+        <a href="{{ new_url }}">{{ new_time.strftime("%Y-%m-%d %H:%M:%S GMT") }}</a>
+      </div>
+    </header>
+
+    {{ diff|safe }}
+
+  </body>
+
+</html>
+
