@@ -212,11 +212,16 @@ class Diff(Model):
         elif self.tweeted:
             log.debug("diff %s has already been tweeted", self.id)
             return
+        elif not (self.old.archive_url and self.new.archive_url):
+            log.debug("not tweeting without archive urls")
+            return
+
         status = self.new.title
         if len(status) >= 85:
             status = status[0:85] + "…"
-        if self.old.archive_url and self.new.archive_url:
-            status += " " + self.old.archive_url +  " -> " + self.new.archive_url
+
+        status += " " + self.old.archive_url +  " -> " + self.new.archive_url
+
         try:
             twitter.update_with_media(self.thumbnail_path, status)
             self.tweeted = datetime.utcnow()
