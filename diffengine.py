@@ -43,6 +43,9 @@ class Feed(Model):
         log.debug("fetching feed: %s", self.url)
         feed = feedparser.parse(self.url)
         for e in feed.entries:
+            # TODO: look up with url only, because there may be 
+            # overlap bewteen feeds, especially when a large newspaper
+            # has multiple feeds
             entry, created = Entry.get_or_create(url=e.link, feed=self)
             if created:
                 log.debug("found new entry: %s", e.link)
