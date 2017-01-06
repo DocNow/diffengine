@@ -178,7 +178,8 @@ class Diff(Model):
 
     @property
     def html_path(self):
-        dir_name = "diffs/%s" % (self.old.entry.id % 53)
+        # use prime number to spread across directories
+        dir_name = "diffs/%s" % (self.old.entry.id % 257)
         if not os.path.isdir(dir_name):
             os.makedirs(dir_name)
         return "%s/%s-%s.html" % (dir_name, self.old.id, self.new.id)
