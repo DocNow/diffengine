@@ -1,8 +1,10 @@
 bleach
+genshi
 peewee
 pyyaml
+tweepy
 requests
 selenium
 feedparser
-simplediff
 readability-lxml
+git+https://github.com/edsu/htmldiff#egg=htmldiff

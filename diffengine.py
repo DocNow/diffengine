@@ -1,24 +1,34 @@
 #!/usr/bin/env python
 
 import os
+import json
 import time
 import yaml
 import bleach
 import codecs
+import tweepy
 import logging
+import htmldiff
 import requests
 import selenium
 import feedparser
-import simplediff
 import readability
 
 from peewee import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from selenium import webdriver
 
 config = yaml.load(open('config.yaml'))
 db = SqliteDatabase('diffengine.db')
 
+twitter = None
+if config['twitter']:
+    t = config['twitter']
+    auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
+    auth.secure = True
+    auth.set_access_token(t['access_token'], t['access_token_secret'])
+    twitter = tweepy.API(auth)
+            
 
 class Feed(Model):
     url = CharField(primary_key=True)
@@ -45,17 +55,51 @@ class Entry(Model):
     feed = ForeignKeyField(Feed, related_name='entries')
 
     def stale(self):
-        # TODO: do something fancy with created and checked
-        return True
+        """
+        A heuristic for checking new content very often, and checking 
+        older content less frequently. If an entry is deemed stale then
+        it is worth checking again to see if the content has changed.
+        """
+        log = logging.getLogger(__name__)
+
+        # never been checked before it's obviously stale
+        if not self.checked:
+            return True
+
+        # time since the entry was created
+        hotness = (datetime.now() - self.created).seconds
+
+        # time since the entry was last checked
+        staleness = (datetime.now() - self.checked).seconds
+
+        # ratio of staleness to hotness
+        r = staleness / float(hotness)
+
+        # TODO: allow this magic number to be configured per feed?
+        if r >= 0.125:
+            log.debug("%s is stale (%f)", self.url, r)
+            return True
+
+        # Why 0.125 you ask? Well it's just a guess. If an entry was first 
+        # noticed 2 hours ago (7200 secs) and the last time it was 
+        # checked was 15 minutes ago (900 secs) then it is deemed stale
+        #
+        # Similarly, if the entry was first noticed 2 weeks ago (1209600 secs)
+        # and it was last checked 1 and 3/4 days ago (151200 secs) then it 
+        # will be deemed stale.
+
+        log.debug("%s not stale (%f)", self.url, r)
+        return False
 
     def get_latest(self):
         log = logging.getLogger(__name__)
 
-        # TODO: maybe there's a better way to be nice to servers?
-        time.sleep(1)
-
         if not self.stale():
+            log.debug("skipping %s, not stale", self.url) 
             return
+
+        # make sure we don't go too fast
+        time.sleep(1)
 
         # fetch the current readability-ized content for the page
         log.debug("checking %s", self.url)
@@ -63,7 +107,7 @@ class Entry(Model):
         doc = readability.Document(resp.text)
         title = doc.title()
         summary = doc.summary(html_partial=True)
-        summary = bleach.clean(summary, tags=["p", "div"], strip=True)
+        summary = bleach.clean(summary, tags=["p"], strip=True)
 
         # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
@@ -76,16 +120,16 @@ class Entry(Model):
         # compare what we got against the latest version and create a 
         # new version if it looks different, or is brand new (no last version)
         if not lastv or lastv.title != title or lastv.summary != summary:
-            if lastv:
-                log.info("found a new version: %s", self.url)
-            else:
-                log.debug("found first version: %s", self.url)
             version = EntryVersion.create(
                 title=title,
                 summary=summary,
                 entry=self
             )
             version.archive()
+            if lastv:
+                log.info("found a new version: %s", self.url)
+            else:
+                log.debug("found first version: %s", self.url)
 
         self.checked = datetime.now()
         self.save()
@@ -99,13 +143,12 @@ class Entry(Model):
 
         i = 0
         while i < len(versions) - 1:
-            log.debug("comparing versions %s and %s", i, i+1)
             self._generate_diff(versions[i], versions[i+1])
             i += 1
 
     def _generate_diff(self, v1, v2):
-        html_path = self._generate_diff_html(v1, v2)
-        self._generate_diff_image(html_path)
+        self._generate_diff_html(v1, v2)
+        self._generate_diff_image()
 
     def _generate_diff_html(self, v1, v2):
         log = logging.getLogger(__name__)
@@ -113,7 +156,8 @@ class Entry(Model):
         if os.path.isfile(path):
             return path
         log.debug("creating html diff: %s", path)
-        diff = simplediff.html_diff(v1.html, v2.html)
+        diff = htmldiff.render_html_diff(v1.html, v2.html)
+        # TODO: move this to geshi since we have that installed for htmldiff?
         html = """
             <html>
               <head>
@@ -147,16 +191,18 @@ class Entry(Model):
         codecs.open(path, "w", 'utf8').write(html)
         return path
 
-    def _generate_diff_image(self, html_path):
+    def _generate_diff_image(self):
         log = logging.getLogger(__name__)
-        img_path = html_path.replace(".html", ".jpg")
+        img_path = self.screenshot_path
         if os.path.isfile(img_path):
             return img_path
         log.debug("creating image screenshot %s", img_path)
-        phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
-        driver = webdriver.PhantomJS(phantomjs)
-        driver.get(html_path)
-        driver.save_screenshot(img_path)
+        if not hasattr(self, 'browser'):
+            phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
+            self.browser = webdriver.PhantomJS(phantomjs)
+            self.browser.set_window_size(1400, 1000)
+        self.browser.get(self.html_path)
+        self.browser.save_screenshot(img_path)
         return img_path
 
     class Meta:
@@ -174,17 +220,37 @@ class EntryVersion(Model):
     def html(self):
         return "<h1>%s</h1>\n\n%s" % (self.title, self.summary)
 
+    @property
+    def html_path(self):
+        return "diffs/%s-%s.html" % (v1.id, v2.id)
+
+    @property
+    def screenshot_path(self):
+        return self.html_path.replace(".html", ".jpg")
+
     def archive(self):
         log = logging.getLogger(__name__)
         data = {'url': self.entry.url}
         resp = requests.post('https://pragma.archivelab.org', json=data)
-        wayback_id = resp.json()['wayback_id']
+        data = resp.json()
+        if 'wayback_id' not in data:
+            log.error("unexpected archive.org response: %s", json.dumps(data))
+            return
+        wayback_id = data['wayback_id']
         self.archive_url = "https://wayback.archive.org" + wayback_id
         log.debug("archived version at %s", self.archive_url)
         self.save()
 
     class Meta:
         database = db
+
+
+class Diff(model):
+    old = ForeignKeyField(EntryVersion)
+    new = ForeignKeyField(EntryVersion)
+    created = DateTimeField(default=datetime.now)
+    tweeted = DateTimeField(null=True)
+    blogged = DateTimeField(null=True)
 
 
 def setup_logging():
@@ -203,6 +269,7 @@ def main():
     log.debug("starting up")
     db.connect()
     db.create_tables([Feed, Entry, EntryVersion], safe=True)
+
     for f in config['feeds']:
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
         if created:
@@ -216,6 +283,8 @@ def main():
             entry.get_latest()
             if len(entry.versions) > 1:
                 entry.generate_diffs()
+
+    log.debug("shutting down")
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")

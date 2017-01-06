@@ -1,3 +1,9 @@
+body {
+    font-size: 15pt;
+    margin: 0px;
+    background-color: white;
+}
+
 del {
     background-color: pink;
     text-decoration: none;
@@ -16,11 +22,6 @@ ins {
 ins p {
     background-color: lightgreen;
     text-decoration: none;
-}
-
-body {
-    font-size: 14pt;
-    margin: 0px;
 }
 
 .diff {
