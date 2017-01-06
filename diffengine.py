@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+UA = "diffengine/0.1 (+https://github.com/edsu/diffengine)"
+
 import os
 import json
 import time
@@ -41,7 +43,7 @@ class Feed(Model):
         log.debug("fetching feed: %s", self.url)
         feed = feedparser.parse(self.url)
         for e in feed.entries:
-            entry, created = Entry.create_or_get(url=e.link, feed=self)
+            entry, created = Entry.get_or_create(url=e.link, feed=self)
             if created:
                 log.debug("found new entry: %s", e.link)
 
@@ -79,26 +81,17 @@ class Entry(Model):
         r = staleness / float(hotness)
 
         # TODO: allow this magic number to be configured per feed?
-        if r >= 0.125:
-            log.debug("%s is stale (%f)", self.url, r)
+        if r >= 0.2:
+            log.debug("%s is stale (r=%f)", self.url, r)
             return True
 
-        # Why 0.125 you ask? Well it's just a guess. If an entry was first 
-        # noticed 2 hours ago (7200 secs) and the last time it was 
-        # checked was 15 minutes ago (900 secs) then it is deemed stale
-        #
-        # Similarly, if the entry was first noticed 2 weeks ago (1209600 secs)
-        # and it was last checked 1 and 3/4 days ago (151200 secs) then it 
-        # will be deemed stale.
-
-        log.debug("%s not stale (%f)", self.url, r)
+        log.debug("%s not stale (r=%f)", self.url, r)
         return False
 
     def get_latest(self):
         log = logging.getLogger(__name__)
 
         if not self.stale():
-            log.debug("skipping %s, not stale", self.url) 
             return
 
         # make sure we don't go too fast
@@ -106,7 +99,7 @@ class Entry(Model):
 
         # fetch the current readability-ized content for the page
         log.debug("checking %s", self.url)
-        resp = requests.get(self.url)
+        resp = requests.get(self.url, headers={"User-Agent": UA})
         doc = readability.Document(resp.text)
         title = doc.title()
         summary = doc.summary(html_partial=True)
@@ -131,6 +124,7 @@ class Entry(Model):
             )
             new.archive()
             if old:
+                log.info("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 diff.generate()
             else:
@@ -157,8 +151,9 @@ class EntryVersion(Model):
 
     def archive(self):
         log = logging.getLogger(__name__)
-        data = {'url': self.entry.url}
-        resp = requests.post('https://pragma.archivelab.org', json=data)
+        resp = requests.post('https://pragma.archivelab.org',
+                             json={'url': self.entry.url},
+                             headers={"User-Agent": UA})
         data = resp.json()
         if 'wayback_id' not in data:
             log.error("unexpected archive.org response: %s", json.dumps(data))
@@ -190,86 +185,16 @@ class Diff(Model):
     def screenshot_path(self):
         return self.html_path.replace(".html", ".jpg")
 
-    def generate(self, force=False):
-        self._generate_diff_html(force=force)
-        self._generate_diff_image(force=force)
+    def generate(self):
+        self._generate_diff_html()
+        self._generate_diff_image()
 
-    def _generate_diff_html(self, force=False):
+    def _generate_diff_html(self):
         log = logging.getLogger(__name__)
-        if os.path.isfile(self.html_path) and not force:
+        if os.path.isfile(self.html_path):
             return
         log.debug("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
-        # TODO: move this to genshi since we have that installed for htmldiff?
-#        html = """
-#            <html>
-#              <head>
-#                <meta charset="UTF-8">
-#                <title></title>
-#                <style>
-#                body {
-#                    font-size: 15pt;
-#                    margin: 0px;
-#                    background-color: white;
-#                }
-#
-#                del {
-#                    background-color: pink;
-#                    text-decoration: none;
-#                }
-#
-#                del p {
-#                    background-color: pink;
-#                    text-decoration: none;
-#                }
-#
-#                ins {
-#                    background-color: lightgreen;
-#                    text-decoration: none;
-#                }
-#
-#                ins p {
-#                    background-color: lightgreen;
-#                    text-decoration: none;
-#                }
-#
-#                .diff {
-#                    margin: 10%;
-#                }
-#
-#                header {
-#                    text-align: center;
-#                    background-color: #eeeeee;
-#                    padding: 10px;
-#                    border-bottom: thin solid #dddddd;
-#                }
-#
-#                header .archive {
-#                    margin-top: 10px;
-#                    vertical-align: middle;
-#                }
-#
-#                .archive a {
-#                    text-decoration: none;
-#                }
-#                </style>
-#              </head>
-#              <body>
-#              <header>
-#                <div class="url"><a href="%s">%s</a></div>
-#                <div class="archive">
-#                  <img src="ia.png"> 
-#                  <a href="%s">%s</a> ≠ <a href="%s">%s</a>
-#                </div>
-#              </header>
-#              <div class="diff">%s</div>
-#            </body>
-#            </html>""" % (
-#                self.old.entry.url, self.old.entry.url,
-#                self.old.archive_url, _dt(self.old.created),
-#                self.new.archive_url, _dt(self.new.created),
-#                diff
-#            )
         tmpl = jinja2.Template(open("diff.html").read())
         html = tmpl.render(
             title=self.new.title,
@@ -282,9 +207,9 @@ class Diff(Model):
         )
         codecs.open(self.html_path, "w", 'utf8').write(html)
 
-    def _generate_diff_image(self, force=False):
+    def _generate_diff_image(self):
         log = logging.getLogger(__name__)
-        if os.path.isfile(self.screenshot_path) and not force:
+        if os.path.isfile(self.screenshot_path):
             return
         log.debug("creating image screenshot %s", self.screenshot_path)
         if not hasattr(self, 'browser'):
