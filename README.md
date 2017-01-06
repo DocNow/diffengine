@@ -1,3 +1,5 @@
+## Why?
+
 Most newspapers make sure that what they print is as accurate as possible,
 because once the words are on paper, and the paper is in someone's hands,
 there's no changing it. This involves attention to truthfulness, accuracy,
