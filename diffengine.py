@@ -182,10 +182,10 @@ class Diff(Model):
     @property
     def html_path(self):
         # use prime number to spread across directories
-        dir_name = "diffs/%s" % (self.old.entry.id % 257)
-        if not os.path.isdir(dir_name):
-            os.makedirs(dir_name)
-        return "%s/%s-%s.html" % (dir_name, self.old.id, self.new.id)
+        path = "diffs/%s/%s.html" % ((self.id % 257), self.id)
+        if not os.path.isdir(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+        return path
 
     @property
     def screenshot_path(self):
