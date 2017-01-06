@@ -5,8 +5,9 @@ case today for the print newspapers that still survive.
 
 However the same is not true on the web, where stories can be quickly changed
 and updated as new facts arrive, and more is learned. Many news outlets treat
-the web as their place for working drafts, which allows them craft a story over
-time while being first to publish breaking news.
+the web as their place for working drafts, which allows them to craft a story in
+near real time, which gives them the opportunity of being the first to publish a
+breaking news story.
 
 But news travels fast in social media. What if you don't subscribe to the print
 newspaper anymore? And what if that initial, perhaps flawed version goes viral,
