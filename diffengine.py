@@ -25,7 +25,7 @@ config = yaml.load(open('config.yaml'))
 db = SqliteDatabase('diffengine.db')
 
 twitter = None
-if config['twitter']:
+if 'twitter' in config:
     t = config['twitter']
     auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
     auth.secure = True
