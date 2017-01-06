@@ -105,6 +105,7 @@ class Entry(Model):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
 
+
         # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
         versions = versions.order_by(-EntryVersion.created)
@@ -114,8 +115,9 @@ class Entry(Model):
             old = versions[0]
 
         # compare what we got against the latest version and create a 
-        # new version if it looks different, or is brand new (no last version)
+        # new version if it looks different, or is brand new (no old version)
         diff = None
+
         if not old or old.title != title or old.summary != summary:
             new = EntryVersion.create(
                 title=title,
@@ -232,7 +234,6 @@ def setup_logging():
     fh.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
     logger.addHandler(fh)
     return logger
-
 
 
 def main():
