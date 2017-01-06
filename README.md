@@ -16,7 +16,7 @@ flawed version goes viral, and it is the only version you ever read?  It's not
 necessarily *fake news*, because there's no intent to mislead ...  but it may
 not have been the best news either.
 
----
+## diffengine
 
 diffengine is a utility for watching RSS feeds to see when story
 content changes. When new content is found a snapshot is saved at the Internet
@@ -29,7 +29,17 @@ diffengine should work with any site that publishes a feed. And rather than
 creating another website for people to watch diffengine pushes updates out to
 social media where people are already.
 
+## Install
+
+Soon...
+
+## Examples
+
+* [wapo_diff]: announces edits to [Washington Post] articles.
+
 [nyt_diff]: https://twitter.com/nyt_diff
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
+[wapo_diff]: https://twitter.com/wapo_diff
+[Washington Post]: https://www.washingtonpost.com
