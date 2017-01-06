@@ -237,7 +237,6 @@ class Diff(Model):
         database = db
 
 
-
 def setup_logging():
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
