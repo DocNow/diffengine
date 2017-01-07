@@ -3,6 +3,7 @@ genshi
 jinja2
 peewee
 pillow
+pytest
 pyyaml
 tweepy
 requests
