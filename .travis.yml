@@ -1,7 +1,4 @@
-python:
- - '3.5'
-
+python: '3.5'
 language: python
-
-after_failure:
- - cat test/diffengine.log
+script: pytest
+after_failure: cat test/diffengine.log
