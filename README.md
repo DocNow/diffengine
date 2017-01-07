@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
+
 ## Why?
 
 Most newspapers make sure that what they print is as accurate as possible,
