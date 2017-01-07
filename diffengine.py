@@ -82,9 +82,13 @@ class Entry(Model):
         logging.debug("%s not stale (r=%f)", self.url, r)
         return False
 
-    def get_latest(self):
+    def get_latest(self, force=False):
+        """
+        Check to see if the entry has changed. If it has you'll get back
+        the EntryVersion for it.
+        """
 
-        if not self.stale():
+        if not self.stale() and not force:
             return
 
         # make sure we don't go too fast
@@ -113,7 +117,7 @@ class Entry(Model):
 
         # compare what we got against the latest version and create a 
         # new version if it looks different, or is brand new (no old version)
-        diff = None
+        new = None
 
         if not old or old.title != title or old.summary != summary:
             new = EntryVersion.create(
@@ -134,7 +138,7 @@ class Entry(Model):
 
         self.checked = datetime.utcnow()
         self.save()
-        return diff
+        return new
 
     class Meta:
         database = db
@@ -146,6 +150,14 @@ class EntryVersion(Model):
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, related_name='versions')
+
+    @property
+    def prev_diff(self):
+        return self.prev_diffs.get()
+
+    @property
+    def next_diff(self):
+        return self.next_diffs.get()
 
     @property
     def html(self):
@@ -171,8 +183,8 @@ class EntryVersion(Model):
 
 
 class Diff(Model):
-    old = ForeignKeyField(EntryVersion, related_name="prev_diff")
-    new = ForeignKeyField(EntryVersion, related_name="next_diff")
+    old = ForeignKeyField(EntryVersion, related_name="prev_diffs")
+    new = ForeignKeyField(EntryVersion, related_name="next_diffs")
     created = DateTimeField(default=datetime.utcnow)
     tweeted = DateTimeField(null=True)
     blogged = DateTimeField(null=True)
@@ -320,7 +332,7 @@ def main():
         
         # get latest content for each entry
         for entry in feed.entries:
-            diff = entry.get_latest()
+            entry.get_latest()
 
     logging.debug("shutting down")
 

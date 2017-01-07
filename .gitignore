@@ -3,3 +3,7 @@
 *.db
 config.yaml
 diffs/*
+.cache
+.eggs
+test
+diffengine.egg-info

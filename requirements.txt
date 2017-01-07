@@ -2,6 +2,7 @@ bleach
 genshi
 jinja2
 peewee
+pillow
 pyyaml
 tweepy
 requests
