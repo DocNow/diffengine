@@ -3,6 +3,7 @@
 UA = "diffengine/0.1 (+https://github.com/edsu/diffengine)"
 
 import os
+import sys
 import json
 import time
 import yaml
@@ -21,17 +22,9 @@ from peewee import *
 from datetime import datetime, timedelta
 from selenium import webdriver
 
-config = yaml.load(open('config.yaml'))
-db = SqliteDatabase('diffengine.db')
-
+config = {}
+db = SqliteDatabase(None)
 twitter = None
-if 'twitter' in config:
-    t = config['twitter']
-    auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
-    auth.secure = True
-    auth.set_access_token(t['access_token'], t['access_token_secret'])
-    twitter = tweepy.API(auth)
-            
 
 class Feed(Model):
     url = CharField(primary_key=True)
@@ -39,8 +32,7 @@ class Feed(Model):
     created = DateTimeField(default=datetime.utcnow)
 
     def get_latest(self):
-        log = logging.getLogger(__name__)
-        log.debug("fetching feed: %s", self.url)
+        logging.info("fetching feed: %s", self.url)
         feed = feedparser.parse(self.url)
         for e in feed.entries:
             # TODO: look up with url only, because there may be 
@@ -48,7 +40,7 @@ class Feed(Model):
             # has multiple feeds
             entry, created = Entry.get_or_create(url=e.link, feed=self)
             if created:
-                log.debug("found new entry: %s", e.link)
+                logging.info("found new entry: %s", e.link)
 
     class Meta:
         database = db
@@ -66,7 +58,6 @@ class Entry(Model):
         older content less frequently. If an entry is deemed stale then
         it is worth checking again to see if the content has changed.
         """
-        log = logging.getLogger(__name__)
 
         # never been checked before it's obviously stale
         if not self.checked:
@@ -85,14 +76,13 @@ class Entry(Model):
 
         # TODO: allow this magic number to be configured per feed?
         if r >= 0.2:
-            log.debug("%s is stale (r=%f)", self.url, r)
+            logging.debug("%s is stale (r=%f)", self.url, r)
             return True
 
-        log.debug("%s not stale (r=%f)", self.url, r)
+        logging.debug("%s not stale (r=%f)", self.url, r)
         return False
 
     def get_latest(self):
-        log = logging.getLogger(__name__)
 
         if not self.stale():
             return
@@ -101,7 +91,7 @@ class Entry(Model):
         time.sleep(1)
 
         # fetch the current readability-ized content for the page
-        log.debug("checking %s", self.url)
+        logging.info("checking %s", self.url)
         resp = requests.get(self.url, headers={"User-Agent": UA})
         doc = readability.Document(resp.text)
         title = doc.title()
@@ -133,12 +123,14 @@ class Entry(Model):
             )
             new.archive()
             if old:
-                log.info("found new version %s", old.entry.url)
+                logging.info("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 diff.generate()
                 diff.tweet()
             else:
-                log.debug("found first version: %s", self.url)
+                logging.info("found first version: %s", self.url)
+        else:
+            logging.info("content hasn't changed %s", self.url)
 
         self.checked = datetime.utcnow()
         self.save()
@@ -160,17 +152,18 @@ class EntryVersion(Model):
         return "<h1>%s</h1>\n\n%s" % (self.title, self.summary)
 
     def archive(self):
-        log = logging.getLogger(__name__)
         resp = requests.post('https://pragma.archivelab.org',
                              json={'url': self.entry.url},
                              headers={"User-Agent": UA})
         data = resp.json()
         if 'wayback_id' not in data:
-            log.error("unexpected archive.org response: %s", json.dumps(data))
+            logging.error("unexpected archive.org response: %s ; headers=%s", 
+                      json.dumps(data),
+                      resp.headers)
             return
         wayback_id = data['wayback_id']
         self.archive_url = "https://wayback.archive.org" + wayback_id
-        log.debug("archived version at %s", self.archive_url)
+        logging.info("archived version at %s", self.archive_url)
         self.save()
 
     class Meta:
@@ -187,7 +180,7 @@ class Diff(Model):
     @property
     def html_path(self):
         # use prime number to spread across directories
-        path = "diffs/%s/%s.html" % ((self.id % 257), self.id)
+        path = home_path("diffs/%s/%s.html" % ((self.id % 257), self.id))
         if not os.path.isdir(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
         return path
@@ -205,12 +198,11 @@ class Diff(Model):
         self._generate_diff_images()
 
     def tweet(self):
-        log = logging.getLogger(__name__)
         if not twitter:
-            log.debug("twitter not configured")
+            logging.debug("twitter not configured")
             return
         elif self.tweeted:
-            log.debug("diff %s has already been tweeted", self.id)
+            logging.warn("diff %s has already been tweeted", self.id)
             return
         status = self.new.title
         if len(status) >= 85:
@@ -220,17 +212,16 @@ class Diff(Model):
         try:
             twitter.update_with_media(self.thumbnail_path, status)
             self.tweeted = datetime.utcnow()
-            log.info("tweeted %s", status)
+            logging.info("tweeted %s", status)
             self.save()
         except Exception as e:
-            log.error("unable to tweet: %s", e)
+            logging.error("unable to tweet: %s", e)
 
 
     def _generate_diff_html(self):
-        log = logging.getLogger(__name__)
         if os.path.isfile(self.html_path):
             return
-        log.debug("creating html diff: %s", self.html_path)
+        logging.info("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
         tmpl = jinja2.Template(codecs.open("diff.html", "r", "utf8").read())
         html = tmpl.render(
@@ -245,17 +236,16 @@ class Diff(Model):
         codecs.open(self.html_path, "w", 'utf8').write(html)
 
     def _generate_diff_images(self):
-        log = logging.getLogger(__name__)
         if os.path.isfile(self.screenshot_path):
             return
         if not hasattr(self, 'browser'):
-            phantomjs = config.get('phantomjs', '/usr/local/bin/phantomjs')
+            phantomjs = config.get('phantomjs', 'phantomjs')
             self.browser = webdriver.PhantomJS(phantomjs)
-        log.debug("creating image screenshot %s", self.screenshot_path)
+        logging.info("creating image screenshot %s", self.screenshot_path)
         self.browser.set_window_size(1400, 1000)
         self.browser.get(self.html_path)
         self.browser.save_screenshot(self.screenshot_path)
-        log.debug("creating image thumbnail %s", self.thumbnail_path)
+        logging.info("creating image thumbnail %s", self.thumbnail_path)
         self.browser.set_window_size(800, 400)
         self.browser.execute_script("clip()")
         self.browser.save_screenshot(self.thumbnail_path)
@@ -263,27 +253,67 @@ class Diff(Model):
     class Meta:
         database = db
 
+def setup_twitter():
+    global twitter
+    if 'twitter' not in config:
+        return
+    t = config['twitter']
+    auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
+    auth.secure = True
+    auth.set_access_token(t['access_token'], t['access_token_secret'])
+    twitter = tweepy.API(auth)
 
 def setup_logging():
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler("diffengine.log")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-    logger.addHandler(fh)
-    return logger
+    path = config.get('log', home_path('diffengine.log'))
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        filename=path,
+        filemode="a"
+    )
 
+def load_config(home):
+    global config
+    config_file = os.path.join(home, "config.yaml")
+    if os.path.isfile(config_file):
+        config = yaml.load(open(config_file))
+    else:
+        if not os.path.isdir(home):
+            os.makedirs(home)
+        config = {"feeds": []}
+        yaml.dump(config, open(config_file, "w"))
+    config['home'] = home
 
-def main():
-    log = setup_logging()
-    log.debug("starting up")
+def home_path(rel_path):
+    return os.path.join(config['home'], rel_path)
+
+def setup_db():
+    global db
+    db_file = config.get('db', home_path('diffengine.db'))
+    logging.debug("connecting to db %s", db_file)
+    db.init(db_file)
     db.connect()
     db.create_tables([Feed, Entry, EntryVersion, Diff], safe=True)
 
+def init(home):
+    load_config(home)
+    setup_logging()
+    setup_db()
+    setup_twitter()
+
+def main():
+    if len(sys.argv) == 1:
+        home = os.getcwd()
+    else:
+        home = sys.argv[1]
+
+    init(home)
+    logging.info("starting up with home=%s", home)
+    
     for f in config['feeds']:
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
         if created:
-            log.debug("created new feed for %s", f['url'])
+            logging.debug("created new feed for %s", f['url'])
 
         # get latest feed entries
         feed.get_latest()
@@ -292,7 +322,7 @@ def main():
         for entry in feed.entries:
             diff = entry.get_latest()
 
-    log.debug("shutting down")
+    logging.debug("shutting down")
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
