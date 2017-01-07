@@ -1,4 +1,4 @@
 python: '3.5'
 language: python
-script: pytest
+script: py.test
 after_failure: cat test/diffengine.log
