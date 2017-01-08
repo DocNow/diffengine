@@ -62,7 +62,6 @@ class Feed(BaseModel):
 
 class Entry(BaseModel):
     url = CharField()
-    canonical_url = None
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
 
@@ -123,9 +122,8 @@ class Entry(BaseModel):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
 
-        # in case there was a redirect, save the actual url for archiving
-        self.canonical_url = _remove_utm(resp.url)
-        self.save()
+        # in case there was a redirect, and remove utm style marketing
+        canonical_url = _remove_utm(resp.url)
 
         # little cleanups that should be in a function if they grow more
         summary = summary.replace("\xa0", " ")
@@ -147,6 +145,7 @@ class Entry(BaseModel):
         if not old or old.title != title or old.summary != summary:
             new = EntryVersion.create(
                 title=title,
+                url=canonical_url,
                 summary=summary,
                 entry=self
             )
@@ -174,6 +173,7 @@ class FeedEntry(BaseModel):
 
 class EntryVersion(BaseModel):
     title = CharField()
+    url = CharField()
     summary = CharField()
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
@@ -193,7 +193,7 @@ class EntryVersion(BaseModel):
 
     def archive(self):
         resp = requests.post('https://pragma.archivelab.org',
-                             json={'url': self.entry.canonical_url},
+                             json={'url': self.url},
                              headers={"User-Agent": UA})
         data = resp.json()
         if 'wayback_id' not in data:
