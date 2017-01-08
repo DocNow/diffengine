@@ -33,9 +33,27 @@ diffengine should work with any site that publishes a feed. And rather than
 creating another website for people to watch diffengine pushes updates out to
 social media where people are already.
 
-## Install
+## Install 
 
-Soon...
+The hardest part here is that you need to install PhantomJS which is a headless
+browser used to create image snapshots of the diffs. Fortunately there are
+packages you can download for major platforms.
+
+1. install [PhantomJS](http://phantomjs.org)
+1. install [Python](https://python.org)
+1. `pip install diffengine`
+
+## Run
+
+In order to run diffengine you need to pick a directory location where you can
+store the diffengine configuration, database and diffs. For example I have a
+directory in my home directory, but you can use whatever location you want:
+
+    diffengine /home/ed/.diffengine
+
+The first time you run it it will prompt you to enter an RSS or Atom feed URL to
+monitor. After that you'll probably want to run it from cron on some kind of
+schedule.
 
 ## Examples
 

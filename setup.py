@@ -1,16 +1,23 @@
 from setuptools import setup
 
-requirements = open("requirements.txt").read().split()
+reqs = open("requirements.txt").read().split()
+
+# hack until htmldiff is updated on pypi
+htmldiff = "https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2"
+reqs.remove(htmldiff)
+reqs.append("htmldiff==0.2")
+deps = [htmldiff]
 
 setup(
     name="diffengine",
-    version="0.0.1",
+    version="0.0.6",
     author="Ed Summers",
     author_email="ehs@pobox.com",
     py_modules=["diffengine"],
     scripts=["bin/diffengine"],
     description="Tweet changes to stories in RSS feeds",
-    requirements=requirements,
+    install_requires=reqs,
+    dependency_links=deps,
     setup_requires=["pytest-runner"],
     tests_require=["pytest"]
 )

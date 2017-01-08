@@ -10,4 +10,4 @@ requests
 selenium
 feedparser
 readability-lxml
-git+https://github.com/edsu/htmldiff#egg=htmldiff
+https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2

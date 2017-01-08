@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from selenium import webdriver
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
+home = None
 config = {}
 db = SqliteDatabase(None)
 twitter = None
@@ -313,7 +314,7 @@ def setup_logging():
         filemode="a"
     )
 
-def load_config(home):
+def load_config():
     global config
     config_file = os.path.join(home, "config.yaml")
     if os.path.isfile(config_file):
@@ -321,12 +322,29 @@ def load_config(home):
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
-        config = {"feeds": []}
-        yaml.dump(config, open(config_file, "w"))
-    config['home'] = home
+        config = get_initial_config()
+        yaml.dump(config, open(config_file, "w"), default_flow_style=False)
+
+def get_initial_config():
+    config = {"feeds": [], "phantoms": "phantomjs"}
+    while len(config['feeds']) == 0:
+        url = input("What RSS/Atom feed would you like to monitor? ")
+        feed = feedparser.parse(url)
+        if len(feed.entries) == 0:
+            print("Oops, that doesn't look like an RSS or Atom feed.")
+        else:
+            config['feeds'].append({
+                "url": url,
+                "name": feed.feed.title
+            })
+    # TODO: prompt for twitter configuration?
+    print("Saved your configuration in %s/config.yaml" % home.rstrip("/"))
+    print("Fetching initial set of entries.")
+
+    return config
 
 def home_path(rel_path):
-    return os.path.join(config['home'], rel_path)
+    return os.path.join(home, rel_path)
 
 def setup_db():
     global db
@@ -341,10 +359,14 @@ def setup_phantomjs():
     try:
         subprocess.check_output([phantomjs, '--version'])
     except FileNotFoundError:
-        sys.exit("Please install phantomjs <http://phantomjs.org/>")
+        print("Please install phantomjs <http://phantomjs.org/>")
+        print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % config["home"].rstrip("/"))
+        sys.exit()
 
-def init(home):
-    load_config(home)
+def init(new_home):
+    global home
+    home = new_home
+    load_config()
     setup_phantomjs()
     setup_logging()
     setup_db()
