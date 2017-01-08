@@ -17,6 +17,7 @@ import htmldiff
 import requests
 import selenium
 import feedparser
+import subprocess
 import readability
 
 from peewee import *
@@ -335,8 +336,16 @@ def setup_db():
     db.connect()
     db.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
 
+def setup_phantomjs():
+    phantomjs = config.get("phantomjs", "phantomjs")
+    try:
+        subprocess.check_output([phantomjs, '--version'])
+    except FileNotFoundError:
+        sys.exit("Please install phantomjs <http://phantomjs.org/>")
+
 def init(home):
     load_config(home)
+    setup_phantomjs()
     setup_logging()
     setup_db()
     setup_twitter()
@@ -350,7 +359,7 @@ def main():
     init(home)
     logging.info("starting up with home=%s", home)
     
-    for f in config['feeds']:
+    for f in config.get('feeds', []):
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
         if created:
             logging.debug("created new feed for %s", f['url'])
