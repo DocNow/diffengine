@@ -3,6 +3,7 @@
 UA = "diffengine/0.1 (+https://github.com/edsu/diffengine)"
 
 import os
+import re
 import sys
 import json
 import time
@@ -21,15 +22,27 @@ import readability
 from peewee import *
 from datetime import datetime, timedelta
 from selenium import webdriver
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
 config = {}
 db = SqliteDatabase(None)
 twitter = None
 
-class Feed(Model):
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+class Feed(BaseModel):
     url = CharField(primary_key=True)
     name = CharField()
     created = DateTimeField(default=datetime.utcnow)
+    
+    @property
+    def entries(self):
+        return (Entry.select()
+                .join(FeedEntry)
+                .join(Feed)
+                .where(Feed.url==self.url))
 
     def get_latest(self):
         logging.info("fetching feed: %s", self.url)
@@ -38,19 +51,27 @@ class Feed(Model):
             # TODO: look up with url only, because there may be 
             # overlap bewteen feeds, especially when a large newspaper
             # has multiple feeds
-            entry, created = Entry.get_or_create(url=e.link, feed=self)
+            entry, created = Entry.get_or_create(url=e.link)
             if created:
+                FeedEntry.create(entry=entry, feed=self)
                 logging.info("found new entry: %s", e.link)
+            elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
+                FeedEntry.create(entry=entry, feed=self)
+                logging.info("found entry from another feed: %s", e.link)
 
-    class Meta:
-        database = db
 
-
-class Entry(Model):
+class Entry(BaseModel):
     url = CharField()
+    canonical_url = None
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
-    feed = ForeignKeyField(Feed, related_name='entries')
+
+    @property
+    def feeds(self):
+        return (Feed.select()
+                .join(FeedEntry)
+                .join(Entry)
+                .where(Entry.id==self.id))
 
     def stale(self):
         """
@@ -102,6 +123,10 @@ class Entry(Model):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
 
+        # in case there was a redirect, save the actual url for archiving
+        self.canonical_url = _remove_utm(resp.url)
+        self.save()
+
         # little cleanups that should be in a function if they grow more
         summary = summary.replace("\xa0", " ")
         summary = summary.replace('“', '"')
@@ -140,11 +165,14 @@ class Entry(Model):
         self.save()
         return new
 
-    class Meta:
-        database = db
+
+class FeedEntry(BaseModel):
+    feed = ForeignKeyField(Feed)
+    entry = ForeignKeyField(Entry)
+    created = DateTimeField(default=datetime.utcnow)
 
 
-class EntryVersion(Model):
+class EntryVersion(BaseModel):
     title = CharField()
     summary = CharField()
     created = DateTimeField(default=datetime.utcnow)
@@ -165,7 +193,7 @@ class EntryVersion(Model):
 
     def archive(self):
         resp = requests.post('https://pragma.archivelab.org',
-                             json={'url': self.entry.url},
+                             json={'url': self.entry.canonical_url},
                              headers={"User-Agent": UA})
         data = resp.json()
         if 'wayback_id' not in data:
@@ -178,11 +206,8 @@ class EntryVersion(Model):
         logging.info("archived version at %s", self.archive_url)
         self.save()
 
-    class Meta:
-        database = db
 
-
-class Diff(Model):
+class Diff(BaseModel):
     old = ForeignKeyField(EntryVersion, related_name="prev_diffs")
     new = ForeignKeyField(EntryVersion, related_name="next_diffs")
     created = DateTimeField(default=datetime.utcnow)
@@ -267,8 +292,6 @@ class Diff(Model):
         self.browser.execute_script("clip()")
         self.browser.save_screenshot(self.thumbnail_path)
 
-    class Meta:
-        database = db
 
 def setup_twitter():
     global twitter
@@ -310,7 +333,7 @@ def setup_db():
     logging.debug("connecting to db %s", db_file)
     db.init(db_file)
     db.connect()
-    db.create_tables([Feed, Entry, EntryVersion, Diff], safe=True)
+    db.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
 
 def init(home):
     load_config(home)
@@ -339,11 +362,23 @@ def main():
         for entry in feed.entries:
             entry.get_latest()
 
-    logging.debug("shutting down")
+    logging.info("shutting down")
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
-        
+
+def _remove_utm(url):
+    u = urlparse(url)
+    q = parse_qs(u.query, keep_blank_values=True)
+    new_q = dict((k, v) for k, v in q.items() if not k.startswith('utm_'))
+    return urlunparse([
+        u.scheme,
+        u.netloc,
+        u.path,
+        u.params,
+        urlencode(new_q, doseq=True),
+        u.fragment
+    ])
 
 if __name__ == "__main__":
     main()

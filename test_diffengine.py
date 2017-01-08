@@ -44,3 +44,22 @@ def test_diff():
     assert os.path.isfile(diff.html_path)
     assert os.path.isfile(diff.screenshot_path)
     assert os.path.isfile(diff.thumbnail_path)
+
+def test_many_to_many():
+
+    # these two feeds share this entry, we want diffengine to support
+    # multiple feeds for the same content, which is fairly common at 
+    # large media organizations with multiple topical feeds
+    url="https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
+
+    f1 = Feed.create(name="feed1", url="file:test-data/feed1.xml")
+    f1.get_latest()
+
+    f2 = Feed.create(name="feed2", url="file:test-data/feed2.xml")
+    f2.get_latest()
+
+    assert f1.entries.where(Entry.url==url).count() == 1
+    assert f2.entries.where(Entry.url==url).count() == 1
+
+    e = Entry.get(Entry.url==url)
+    assert FeedEntry.select().where(FeedEntry.entry==e).count() == 2
