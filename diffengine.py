@@ -194,7 +194,7 @@ class EntryVersion(BaseModel):
         """
         try:
             return Diff.select().where(Diff.new_id==self.id).get()
-        except DiffDoesNotExist:
+        except:
             return None
 
     @property
@@ -206,7 +206,7 @@ class EntryVersion(BaseModel):
         """
         try:
             return Diff.select().where(Diff.old_id==self.id).get()
-        except DiffDoesNotExist:
+        except:
             return None
 
     @property
@@ -312,7 +312,7 @@ def load_config(prompt=True):
         yaml.dump(config, open(config_file, "w"), default_flow_style=False)
 
 def get_initial_config():
-    config = {"feeds": [], "phantoms": "phantomjs"}
+    config = {"feeds": [], "phantomjs": "phantomjs"}
 
     while len(config['feeds']) == 0:
         url = input("What RSS/Atom feed would you like to monitor? ")
@@ -333,8 +333,8 @@ def get_initial_config():
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.secure = True
         auth_url = auth.get_authorization_url()
-        input("Log in to Twitter (as the user you want to tweet as).")
-        input("Visit this URL in your browser %s " % auth_url)
+        input("Log in to https://twitter.com as the user you want to tweet as and hit enter.")
+        input("Visit %s in your browser and hit enter." % auth_url)
         pin = input("What is your PIN: ")
         token = auth.get_access_token(verifier=pin)
         config["twitter"] = {
@@ -368,14 +368,14 @@ def setup_phantomjs():
         subprocess.check_output([phantomjs, '--version'])
     except FileNotFoundError:
         print("Please install phantomjs <http://phantomjs.org/>")
-        print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % config["home"].rstrip("/"))
+        print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % home.rstrip("/"))
         sys.exit()
 
 def tweet_diff(diff, token):
     if 'twitter' not in config:
         logging.debug("twitter not configured")
         return
-    elif not (len(token) == 2 and token[0] and token[1]):
+    elif not token:
         logging.debug("access token/secret not set up for feed")
         return
     elif diff.tweeted:
@@ -388,7 +388,7 @@ def tweet_diff(diff, token):
     t = config['twitter']
     auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
     auth.secure = True
-    auth.set_access_token(token[0], token[1])
+    auth.set_access_token(token['access_token'], token['access_token_secret'])
     twitter = tweepy.API(auth)
 
     status = diff.new.title
@@ -434,17 +434,9 @@ def main():
         
         # get latest content for each entry
         for entry in feed.entries:
-            token = None
-            if 'twitter' in f:
-                token = (
-                    f['twitter']['access_token'],
-                    f['twitter']['access_token_secret']
-                )
-            version = entry.get_latest(twitter_token=token)
-
-            # if the version participates in a diff tweet it out!
-            if version.diff:
-                tweet_diff(diff)
+            version = entry.get_latest()
+            if version and version.diff and 'twitter' in f:
+                tweet_diff(version.diff, f['twitter'])
 
     logging.info("shutting down")
 

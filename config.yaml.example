@@ -1,5 +1,0 @@
-feeds:
-  - name: Washington Post
-    url: http://feeds.washingtonpost.com/rss/politics
-    
-phantomjs: /usr/local/bin/phantomjs
