@@ -8,6 +8,7 @@ from diffengine import *
 if os.path.isdir("test"):
     shutil.rmtree("test")
 
+# set things up but disable prompting for initial feed
 init("test", prompt=False)
 
 # the sequence of these tests is significant
@@ -36,9 +37,9 @@ def test_diff():
 
     v2 = e.get_latest(force=True)
     assert type(v2) == EntryVersion
-    assert v2.next_diff
+    assert v2.diff
 
-    diff = v2.next_diff
+    diff = v2.diff
     assert diff.old == v1
     assert diff.new == v2
     assert os.path.isfile(diff.html_path)

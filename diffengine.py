@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-UA = "diffengine/0.1 (+https://github.com/edsu/diffengine)"
+UA = "diffengine/0.0.1 (+https://github.com/edsu/diffengine)"
 
 import os
 import re
@@ -28,7 +28,6 @@ from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 home = None
 config = {}
 db = SqliteDatabase(None)
-twitter = None
 
 class BaseModel(Model):
     class Meta:
@@ -47,6 +46,9 @@ class Feed(BaseModel):
                 .where(Feed.url==self.url))
 
     def get_latest(self):
+        """
+        Gets the feed and creates new entries for new content.
+        """
         logging.info("fetching feed: %s", self.url)
         feed = feedparser.parse(self.url)
         for e in feed.entries:
@@ -74,6 +76,7 @@ class Entry(BaseModel):
                 .join(Entry)
                 .where(Entry.id==self.id))
 
+    @property   
     def stale(self):
         """
         A heuristic for checking new content very often, and checking 
@@ -104,13 +107,16 @@ class Entry(BaseModel):
         logging.debug("%s not stale (r=%f)", self.url, r)
         return False
 
-    def get_latest(self, force=False):
+    def get_latest(self, force=True):
         """
-        Check to see if the entry has changed. If it has you'll get back
-        the EntryVersion for it.
+        get_latest is the heart of the application. If the entry is stale
+        it will get the current version on the web, extract its summary with 
+        readability and compare it against a previous version. If a difference
+        is found it will compute the diff, save it as html and png files, and
+        tell Internet Archive to create a snapshot.
         """
 
-        if not self.stale() and not force:
+        if not self.stale and not force:
             return
 
         # make sure we don't go too fast
@@ -156,7 +162,6 @@ class Entry(BaseModel):
                 logging.info("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 diff.generate()
-                diff.tweet()
             else:
                 logging.info("found first version: %s", self.url)
         else:
@@ -182,12 +187,27 @@ class EntryVersion(BaseModel):
     entry = ForeignKeyField(Entry, related_name='versions')
 
     @property
-    def prev_diff(self):
-        return self.prev_diffs.get()
+    def diff(self):
+        """
+        The diff that this version created. It can be None if
+        this is the first version of a given entry.
+        """
+        try:
+            return Diff.select().where(Diff.new_id==self.id).get()
+        except DiffDoesNotExist:
+            return None
 
     @property
     def next_diff(self):
-        return self.next_diffs.get()
+        """
+        The diff that this version participates in as the previous
+        version. I know that's kind of a tongue twister. This can be
+        None if this version is the latest we know about.
+        """
+        try:
+            return Diff.select().where(Diff.old_id==self.id).get()
+        except DiffDoesNotExist:
+            return None
 
     @property
     def html(self):
@@ -236,31 +256,6 @@ class Diff(BaseModel):
         self._generate_diff_html()
         self._generate_diff_images()
 
-    def tweet(self):
-        if not twitter:
-            logging.debug("twitter not configured")
-            return
-        elif self.tweeted:
-            logging.warn("diff %s has already been tweeted", self.id)
-            return
-        elif not (self.old.archive_url and self.new.archive_url):
-            log.debug("not tweeting without archive urls")
-            return
-
-        status = self.new.title
-        if len(status) >= 85:
-            status = status[0:85] + "…"
-
-        status += " " + self.old.archive_url +  " -> " + self.new.archive_url
-
-        try:
-            twitter.update_with_media(self.thumbnail_path, status)
-            self.tweeted = datetime.utcnow()
-            logging.info("tweeted %s", status)
-            self.save()
-        except Exception as e:
-            logging.error("unable to tweet: %s", e)
-
 
     def _generate_diff_html(self):
         if os.path.isfile(self.html_path):
@@ -295,16 +290,6 @@ class Diff(BaseModel):
         self.browser.save_screenshot(self.thumbnail_path)
 
 
-def setup_twitter():
-    global twitter
-    if 'twitter' not in config:
-        return
-    t = config['twitter']
-    auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
-    auth.secure = True
-    auth.set_access_token(t['access_token'], t['access_token_secret'])
-    twitter = tweepy.API(auth)
-
 def setup_logging():
     path = config.get('log', home_path('diffengine.log'))
     logging.basicConfig(
@@ -328,6 +313,7 @@ def load_config(prompt=True):
 
 def get_initial_config():
     config = {"feeds": [], "phantoms": "phantomjs"}
+
     while len(config['feeds']) == 0:
         url = input("What RSS/Atom feed would you like to monitor? ")
         feed = feedparser.parse(url)
@@ -338,7 +324,28 @@ def get_initial_config():
                 "url": url,
                 "name": feed.feed.title
             })
-    # TODO: prompt for twitter configuration?
+
+    answer = input("Would you like to set up tweeting edits? [Y/n] ")
+    if answer.lower() == "y":
+        print("Go to https://apps.twitter.com and create an application.")
+        consumer_key = input("What is the consumer key? ")
+        consumer_secret = input("What is the consumer secret? ")
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.secure = True
+        auth_url = auth.get_authorization_url()
+        input("Log in to Twitter (as the user you want to tweet as).")
+        input("Visit this URL in your browser %s " % auth_url)
+        pin = input("What is your PIN: ")
+        token = auth.get_access_token(verifier=pin)
+        config["twitter"] = {
+            "consumer_key": consumer_key,
+            "consumer_secret": consumer_secret
+        }
+        config["feeds"][0]["twitter"] = {
+            "access_token": token[0],
+            "access_token_secret": token[1]
+        }
+
     print("Saved your configuration in %s/config.yaml" % home.rstrip("/"))
     print("Fetching initial set of entries.")
 
@@ -364,6 +371,41 @@ def setup_phantomjs():
         print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % config["home"].rstrip("/"))
         sys.exit()
 
+def tweet_diff(diff, token):
+    if 'twitter' not in config:
+        logging.debug("twitter not configured")
+        return
+    elif not (len(token) == 2 and token[0] and token[1]):
+        logging.debug("access token/secret not set up for feed")
+        return
+    elif diff.tweeted:
+        logging.warn("diff %s has already been tweeted", diff.id)
+        return
+    elif not (diff.old.archive_url and diff.new.archive_url):
+        log.debug("not tweeting without archive urls")
+        return
+
+    t = config['twitter']
+    auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
+    auth.secure = True
+    auth.set_access_token(token[0], token[1])
+    twitter = tweepy.API(auth)
+
+    status = diff.new.title
+    if len(status) >= 85:
+        status = status[0:85] + "…"
+
+    status += " " + diff.old.archive_url +  " -> " + diff.new.archive_url
+
+    try:
+        twitter.update_with_media(diff.thumbnail_path, status)
+        diff.tweeted = datetime.utcnow()
+        logging.info("tweeted %s", status)
+        diff.save()
+    except Exception as e:
+        logging.error("unable to tweet: %s", e)
+
+
 def init(new_home, prompt=True):
     global home
     home = new_home
@@ -371,7 +413,6 @@ def init(new_home, prompt=True):
     setup_phantomjs()
     setup_logging()
     setup_db()
-    setup_twitter()
 
 def main():
     if len(sys.argv) == 1:
@@ -383,6 +424,7 @@ def main():
     logging.info("starting up with home=%s", home)
     
     for f in config.get('feeds', []):
+
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
         if created:
             logging.debug("created new feed for %s", f['url'])
@@ -392,7 +434,17 @@ def main():
         
         # get latest content for each entry
         for entry in feed.entries:
-            entry.get_latest()
+            token = None
+            if 'twitter' in f:
+                token = (
+                    f['twitter']['access_token'],
+                    f['twitter']['access_token_secret']
+                )
+            version = entry.get_latest(twitter_token=token)
+
+            # if the version participates in a diff tweet it out!
+            if version.diff:
+                tweet_diff(diff)
 
     logging.info("shutting down")
 
