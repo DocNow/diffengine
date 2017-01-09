@@ -314,7 +314,7 @@ def setup_logging():
         filemode="a"
     )
 
-def load_config():
+def load_config(prompt=True):
     global config
     config_file = os.path.join(home, "config.yaml")
     if os.path.isfile(config_file):
@@ -322,7 +322,8 @@ def load_config():
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
-        config = get_initial_config()
+        if prompt:
+            config = get_initial_config()
         yaml.dump(config, open(config_file, "w"), default_flow_style=False)
 
 def get_initial_config():
@@ -363,10 +364,10 @@ def setup_phantomjs():
         print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % config["home"].rstrip("/"))
         sys.exit()
 
-def init(new_home):
+def init(new_home, prompt=True):
     global home
     home = new_home
-    load_config()
+    load_config(prompt)
     setup_phantomjs()
     setup_logging()
     setup_db()

@@ -8,7 +8,7 @@ from diffengine import *
 if os.path.isdir("test"):
     shutil.rmtree("test")
 
-init("test")
+init("test", prompt=False)
 
 # the sequence of these tests is significant
 
