@@ -40,8 +40,8 @@ browser used to create image snapshots of the HTML diffs. Fortunately there are
 packages you can download for major platforms.
 
 1. install [PhantomJS](http://phantomjs.org)
-1. install [Python](https://python.org)
-1. `pip install diffengine`
+1. install [Python 3](https://python.org)
+1. `pip3 install diffengine`
 
 ## Run
 
