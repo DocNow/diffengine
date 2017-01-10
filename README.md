@@ -47,21 +47,43 @@ packages you can download for major platforms.
 
 In order to run diffengine you need to pick a directory location where you can
 store the diffengine configuration, database and diffs. For example I have a
-directory in my home directory, but you can use whatever location you want:
+directory in my home directory, but you can use whatever location you want, you
+just need to be able to write to it.
 
-    diffengine /home/ed/.diffengine
+The first time you run diffengine it will prompt you to enter an RSS or Atom
+feed URL to monitor. After that you'll probably want to run it from cron on some
+kind of schedule.
 
-The first time you run it it will prompt you to enter an RSS or Atom feed URL to
-monitor. After that you'll probably want to run it from cron on some kind of
-schedule.
+    % diffengine /home/ed/.diffengine 
+    What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
+    Would you like to set up tweeting edits? [Y/n] Y
+    Go to https://apps.twitter.com and create an application.
+    What is the consumer key? <TWITTER_APP_KEY>
+    What is the consumer secret? <TWITTER_APP_SECRET>
+    Log in to https://twitter.com as the user you want to tweet as and hit enter.
+    Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYYlCL8g
+    What is your PIN: 8675309
+    Saved your configuration in example/config.yaml
+    Fetching initial set of entries.
+
+After that you just need to put diffengine in your crontab to have it run
+regularly, or you can run it manually at your own intervals if you want:
+
+    0,15,30,45 * * * * diffengine /home/ed/.diffengine
 
 ## Examples
 
 * [wapo_diff]: announces edits to [Washington Post] articles.
+* [breitbart_diff]: announces edits to [Breitbart News] articles.
+* [guardian_diff]: announces edits to [The Guardian] articles.
 
 [nyt_diff]: https://twitter.com/nyt_diff
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
 [wapo_diff]: https://twitter.com/wapo_diff
+[wapo_diff]: https://twitter.com/breitbart_diff
+[wapo_diff]: https://twitter.com/guardian_diff
 [Washington Post]: https://www.washingtonpost.com
+[Breitart News]: https://www.breitbart.com
+[The Guardian]: https://www.theguardian.com/
