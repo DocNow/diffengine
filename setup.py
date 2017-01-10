@@ -9,7 +9,7 @@ reqs = open("requirements.txt").read().split()
 # hack until htmldiff is updated on pypi
 htmldiff = "https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2"
 reqs.remove(htmldiff)
-reqs.append("htmldiff==0.2")
+reqs.append("htmldiff")
 deps = [htmldiff]
 
 setup(
