@@ -260,9 +260,10 @@ class Diff(BaseModel):
     def _generate_diff_html(self):
         if os.path.isfile(self.html_path):
             return
+        tmpl_path = os.path.join(os.path.dirname(__file__), "diff.html")
         logging.info("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
-        tmpl = jinja2.Template(codecs.open("diff.html", "r", "utf8").read())
+        tmpl = jinja2.Template(codecs.open(tmpl_path, "r", "utf8").read())
         html = tmpl.render(
             title=self.new.title,
             url=self.old.entry.url,
