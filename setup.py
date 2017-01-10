@@ -1,3 +1,7 @@
+import sys
+if sys.version_info < (3,0):
+    sys.exit('Sorry, diffengine runs on Python 3')
+
 from setuptools import setup
 
 reqs = open("requirements.txt").read().split()
@@ -10,7 +14,7 @@ deps = [htmldiff]
 
 setup(
     name="diffengine",
-    version="0.0.6",
+    version="0.0.8",
     author="Ed Summers",
     author_email="ehs@pobox.com",
     py_modules=["diffengine"],
