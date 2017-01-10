@@ -36,7 +36,7 @@ social media where people are already.
 ## Install 
 
 The hardest part here is that you need to install PhantomJS which is a headless
-browser used to create image snapshots of the diffs. Fortunately there are
+browser used to create image snapshots of the HTML diffs. Fortunately there are
 packages you can download for major platforms.
 
 1. install [PhantomJS](http://phantomjs.org)
