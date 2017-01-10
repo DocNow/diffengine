@@ -55,16 +55,28 @@ feed URL to monitor. After that you'll probably want to run it from cron on some
 kind of schedule.
 
     % diffengine /home/ed/.diffengine 
+
     What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
+
     Would you like to set up tweeting edits? [Y/n] Y
+
     Go to https://apps.twitter.com and create an application.
+
     What is the consumer key? <TWITTER_APP_KEY>
+
     What is the consumer secret? <TWITTER_APP_SECRET>
+
     Log in to https://twitter.com as the user you want to tweet as and hit enter.
+
     Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYYlCL8g
+
     What is your PIN: 8675309
+
     Saved your configuration in example/config.yaml
+    
     Fetching initial set of entries.
+
+    Done!
 
 After that you just need to put diffengine in your crontab to have it run
 regularly, or you can run it manually at your own intervals if you want:
