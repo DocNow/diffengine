@@ -9,11 +9,12 @@ reqs = open("requirements.txt").read().split()
 # hack until htmldiff is updated on pypi
 htmldiff = "https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2"
 reqs.remove(htmldiff)
+reqs.append("htmldiff==0.2")
 deps = [htmldiff]
 
 setup(
     name="diffengine",
-    version="0.0.10",
+    version="0.0.11",
     author="Ed Summers",
     author_email="ehs@pobox.com",
     py_modules=["diffengine"],
