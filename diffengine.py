@@ -382,7 +382,7 @@ def tweet_diff(diff, token):
         logging.warn("diff %s has already been tweeted", diff.id)
         return
     elif not (diff.old.archive_url and diff.new.archive_url):
-        log.debug("not tweeting without archive urls")
+        logging.warn("not tweeting without archive urls")
         return
 
     t = config['twitter']
