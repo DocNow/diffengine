@@ -51,8 +51,7 @@ directory in my home directory, but you can use whatever location you want, you
 just need to be able to write to it.
 
 The first time you run diffengine it will prompt you to enter an RSS or Atom
-feed URL to monitor. After that you'll probably want to run it from cron on some
-kind of schedule.
+feed URL to monitor and will authenticate with Twitter. 
 
     % diffengine /home/ed/.diffengine 
 
@@ -82,6 +81,10 @@ After that you just need to put diffengine in your crontab to have it run
 regularly, or you can run it manually at your own intervals if you want:
 
     0,15,30,45 * * * * diffengine /home/ed/.diffengine
+
+You can examine your config file at any time and add/remove feeds as needed.  It
+is the `config.yaml` file that is stored relative to the storage directory you
+chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 ## Examples
 
