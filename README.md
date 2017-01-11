@@ -1,4 +1,6 @@
-![DiffEngine](https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true)
+<div style="text: center;">
+<img height="400" src="https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true">
+</div>
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
