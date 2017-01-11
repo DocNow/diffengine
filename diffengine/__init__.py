@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# maybe this module should be broken up into multiple files, or maybe not ...
+
 UA = "diffengine/0.0.1 (+https://github.com/edsu/diffengine)"
 
 import os
