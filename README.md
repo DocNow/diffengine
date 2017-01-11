@@ -1,3 +1,5 @@
+<img src="https://raw.github.com/docnow/diffengine/master/images/diffengine.png">
+
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
 ## Why?
