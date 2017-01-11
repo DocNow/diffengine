@@ -1,31 +1,12 @@
-[![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
+<div style="text: center;">
+<img height="200" src="https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true">
+</div>
 
-## Why?
-
-Most newspapers make sure that what they print is as accurate as possible,
-because once the words are on paper, and the paper is in someone's hands,
-there's no changing it. This involves attention to truthfulness, accuracy,
-objectivity, impartiality, fairness and public accountability--in short it is
-the work of professional journalism.
-
-News stories on the web can be edited quickly as new facts arrive, and more is
-learned. Typos can be quickly fixed. Many newspapers treat their website as a
-place for their first drafts, which allows them to craft a story in near real
-time, in order to be the first to publish a breaking story.
-
-But news travels *fast* in social media. What if you don't subscribe to the
-print newspaper anymore? What if the news organization doesn't have a print
-edition and is available only on the web? And what if that initial, perhaps
-flawed version goes viral, and it is the only version you ever read?  It's not
-necessarily *fake news*, because there's no intent to mislead ...  but it may
-not have been the best news either.
-
-## diffengine
-
-diffengine is a utility for watching RSS feeds to see when story
-content changes. When new content is found a snapshot is saved at the Internet
-Archive, and a diff is generated for sending to social media. The hope is that
-it can help draw attention to the way news is being shaped on the web.
+diffengine is a utility for watching RSS feeds to see when story content
+changes. When new content is found a snapshot is saved at the Internet Archive,
+and a diff is generated for sending to social media. The hope is that it can
+help draw attention to the way news is being shaped on the web. It also creates
+a database of changes over time that can be useful for research purposes.
 
 Thanks for the inspiration of [nyt_diff] and [NewsDiffs] which *almost* did what
 was needed, but not quite. Through the magic of [feedparser] and [readability]
@@ -35,13 +16,11 @@ social media where people are already.
 
 ## Install 
 
-The hardest part here is that you need to install PhantomJS which is a headless
-browser used to create image snapshots of the HTML diffs. Fortunately there are
-packages you can download for major platforms.
-
-1. install [PhantomJS](http://phantomjs.org)
-1. install [Python 3](https://python.org)
+1. install [PhantomJS] - also, see [install examples]
+1. install [Python 3]
 1. `pip3 install --process-dependency-links diffengine`
+
+*Coming soon: platform specific binaries.*
 
 ## Run
 
@@ -71,7 +50,7 @@ feed URL to monitor and will authenticate with Twitter.
 
     What is your PIN: 8675309
 
-    Saved your configuration in example/config.yaml
+    Saved your configuration in /home/ed/.diffengine/config.yaml
     
     Fetching initial set of entries.
 
@@ -88,17 +67,39 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 ## Examples
 
-* [wapo_diff]: announces edits to [Washington Post] articles.
-* [breitbart_diff]: announces edits to [Breitbart News] articles.
-* [guardian_diff]: announces edits to [The Guardian] articles.
+* [wapo_diff]: edits to [The Washington Post]
+* [breitbart_diff]: edits to [Breitbart News]
+* [guardian_diff]: edits to [The Guardian]
+* [torstar_diff]: edits to [The Toronto Star]
+* [globemail_diff]: edits to the [The Globe and Mail]
+* [canadaland_diff]: edits to [Canadaland]
+
+## Develop
+
+[![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
 [nyt_diff]: https://twitter.com/nyt_diff
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
+[PhantomJS]: http://phantomjs.org
+[Python 3]: https://python.org
+[install examples]: https://gist.github.com/julionc/7476620
+
 [wapo_diff]: https://twitter.com/wapo_diff
-[wapo_diff]: https://twitter.com/breitbart_diff
-[wapo_diff]: https://twitter.com/guardian_diff
-[Washington Post]: https://www.washingtonpost.com
-[Breitart News]: https://www.breitbart.com
+[The Washington Post]: https://www.washingtonpost.com
+
+[breitbart_diff]: https://twitter.com/breitbart_diff
+[Breitbart News]: https://www.breitbart.com
+
+[guardian_diff]: https://twitter.com/guardian_diff
 [The Guardian]: https://www.theguardian.com/
+
+[torstar_diff]: https://twitter.com/torstar_diff
+[The Toronto Star]: https://www.thestar.com/
+
+[globemail_diff]: https://twitter.com/globemail_diff
+[The Globe and Mail]: http://www.theglobeandmail.com/
+
+[canadaland_diff]: https://twitter.com/canadaland_diff
+[Canadaland]: http://www.canadalandshow.com/
