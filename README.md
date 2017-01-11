@@ -35,10 +35,10 @@ social media where people are already.
 
 ## Install 
 
-The hardest part here is that you need to install PhantomJS which is a headless
-browser used to create image snapshots of the HTML diffs. Fortunately there are
-packages you can download for major platforms, and helpful 
-[install](https://gist.github.com/julionc/7476620) examples.
+In order for diffengine to do its work you need to install [PhantomJS] which is
+a headless browser that is used to save image screenshots of the generated HTML
+diffs.  Fortunately there are packages you can download for major platforms, and
+helpful [install](https://gist.github.com/julionc/7476620) examples.
 
 1. install [PhantomJS](http://phantomjs.org)
 1. install [Python 3](https://python.org)
