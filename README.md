@@ -5,7 +5,8 @@
 diffengine is a utility for watching RSS feeds to see when story content
 changes. When new content is found a snapshot is saved at the Internet Archive,
 and a diff is generated for sending to social media. The hope is that it can
-help draw attention to the way news is being shaped on the web.
+help draw attention to the way news is being shaped on the web. It also creates
+a database of changes over time that can be useful for research purposes.
 
 Thanks for the inspiration of [nyt_diff] and [NewsDiffs] which *almost* did what
 was needed, but not quite. Through the magic of [feedparser] and [readability]
