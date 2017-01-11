@@ -101,7 +101,7 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
 [PhantomJS]: http://phantomjs.org
-[Python3]: https://python.org
+[Python 3]: https://python.org
 
 [wapo_diff]: https://twitter.com/wapo_diff
 [The Washington Post]: https://www.washingtonpost.com
