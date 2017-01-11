@@ -39,6 +39,8 @@ social media where people are already.
 1. install [Python 3]
 1. `pip3 install diffengine`
 
+*Coming soon: platform specific binaries.*
+
 ## Run
 
 In order to run diffengine you need to pick a directory location where you can
