@@ -41,7 +41,7 @@ packages you can download for major platforms.
 
 1. install [PhantomJS](http://phantomjs.org)
 1. install [Python 3](https://python.org)
-1. `pip3 install diffengine`
+1. `pip3 install --process-dependency-links diffengine`
 
 ## Run
 
