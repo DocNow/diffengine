@@ -100,11 +100,13 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
-[nyt_diff]: https://twitter.com/nyt_diff [NewsDiffs]: http://newsdiffs.org/
-[feedparser]: https://pythonhosted.org/feedparser/ [readability]:
-https://github.com/buriy/python-readability [PhantomJS]: http://phantomjs.org
-[Python 3]: https://python.org [install examples]:
-https://gist.github.com/julionc/7476620
+[nyt_diff]: https://twitter.com/nyt_diff
+[NewsDiffs]: http://newsdiffs.org/
+[feedparser]: https://pythonhosted.org/feedparser/
+[readability]: https://github.com/buriy/python-readability
+[PhantomJS]: http://phantomjs.org
+[Python 3]: https://python.org
+[install examples]: https://gist.github.com/julionc/7476620
 
 [wapo_diff]: https://twitter.com/wapo_diff
 [The Washington Post]: https://www.washingtonpost.com
