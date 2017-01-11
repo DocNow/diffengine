@@ -35,12 +35,7 @@ social media where people are already.
 
 ## Install 
 
-In order for diffengine to do its work you need to install [PhantomJS] which is
-a headless browser that is used to save image screenshots of the generated HTML
-diffs.  Fortunately there are packages you can download for major platforms, and
-helpful [install](https://gist.github.com/julionc/7476620) examples.
-
-1. install [PhantomJS]
+1. install [PhantomJS] (also see [install examples])
 1. install [Python 3]
 1. `pip3 install diffengine`
 
@@ -102,6 +97,7 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 [readability]: https://github.com/buriy/python-readability
 [PhantomJS]: http://phantomjs.org
 [Python 3]: https://python.org
+[install examples]: https://gist.github.com/julionc/7476620
 
 [wapo_diff]: https://twitter.com/wapo_diff
 [The Washington Post]: https://www.washingtonpost.com
