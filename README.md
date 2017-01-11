@@ -105,7 +105,7 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 [The Washington Post]: https://www.washingtonpost.com
 
 [breitbart_diff]: https://twitter.com/breitbart_diff
-[Breitart News]: https://www.breitbart.com
+[Breitbart News]: https://www.breitbart.com
 
 [guardian_diff]: https://twitter.com/guardian_diff
 [The Guardian]: https://www.theguardian.com/
