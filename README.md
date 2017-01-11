@@ -89,24 +89,32 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 ## Examples
 
-* [wapo_diff]: announces edits to [Washington Post] articles.
-* [breitbart_diff]: announces edits to [Breitbart News] articles.
-* [guardian_diff]: announces edits to [The Guardian] articles.
-* [torstar_diff]: announces edits to [Toronto Star] articles.
+* [wapo_diff]: edits to [The Washington Post]
+* [breitbart_diff]: edits to [Breitbart News]
+* [guardian_diff]: edits to [The Guardian]
+* [torstar_diff]: edits to [The Toronto Star]
+* [globemail_diff]: edits to the [The Globe and Mail]
+* [canadaland_diff]: edits to [Canadaland]
 
 [nyt_diff]: https://twitter.com/nyt_diff
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
+
 [wapo_diff]: https://twitter.com/wapo_diff
+[The Washington Post]: https://www.washingtonpost.com
+
 [breitbart_diff]: https://twitter.com/breitbart_diff
-[torstar_diff]: https://twitter.com/guardian_diff
-[Washington Post]: https://www.washingtonpost.com
 [Breitart News]: https://www.breitbart.com
+
+[guardian_diff]: https://twitter.com/guardian_diff
 [The Guardian]: https://www.theguardian.com/
-[Toronto Star]: https://www.thestar.com/
+
 [torstar_diff]: https://twitter.com/torstar_diff
-[The Globe and Mail]: http://www.theglobeandmail.com/
+[The Toronto Star]: https://www.thestar.com/
+
 [globemail_diff]: https://twitter.com/globemail_diff
-[Canadaland]: http://www.canadalandshow.com/
+[The Globe and Mail]: http://www.theglobeandmail.com/
+
 [canadaland_diff]: https://twitter.com/canadaland_diff
+[Canadaland]: http://www.canadalandshow.com/
