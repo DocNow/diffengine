@@ -37,7 +37,8 @@ social media where people are already.
 
 The hardest part here is that you need to install PhantomJS which is a headless
 browser used to create image snapshots of the HTML diffs. Fortunately there are
-packages you can download for major platforms.
+packages you can download for major platforms, and helpful 
+[install](https://gist.github.com/julionc/7476620) examples.
 
 1. install [PhantomJS](http://phantomjs.org)
 1. install [Python 3](https://python.org)
@@ -91,14 +92,21 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 * [wapo_diff]: announces edits to [Washington Post] articles.
 * [breitbart_diff]: announces edits to [Breitbart News] articles.
 * [guardian_diff]: announces edits to [The Guardian] articles.
+* [torstar_diff]: announces edits to [Toronto Star] articles.
 
 [nyt_diff]: https://twitter.com/nyt_diff
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
 [wapo_diff]: https://twitter.com/wapo_diff
-[wapo_diff]: https://twitter.com/breitbart_diff
-[wapo_diff]: https://twitter.com/guardian_diff
+[breitbart_diff]: https://twitter.com/breitbart_diff
+[torstar_diff]: https://twitter.com/guardian_diff
 [Washington Post]: https://www.washingtonpost.com
 [Breitart News]: https://www.breitbart.com
 [The Guardian]: https://www.theguardian.com/
+[Toronto Star]: https://www.thestar.com/
+[torstar_diff]: https://twitter.com/torstar_diff
+[The Globe and Mail]: http://www.theglobeandmail.com/
+[globemail_diff]: https://twitter.com/globemail_diff
+[Canadaland]: http://www.canadalandshow.com/
+[canadaland_diff]: https://twitter.com/canadaland_diff
