@@ -67,7 +67,7 @@ feed URL to monitor and will authenticate with Twitter.
 
     What is your PIN: 8675309
 
-    Saved your configuration in example/config.yaml
+    Saved your configuration in /home/ed/.diffengine/config.yaml
     
     Fetching initial set of entries.
 
