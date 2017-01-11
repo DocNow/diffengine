@@ -1,4 +1,4 @@
-![DiffEngine](https://raw.github.com/docnow/diffengine/master/images/diffengine.png)
+![DiffEngine](https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true)
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
