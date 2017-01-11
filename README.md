@@ -40,8 +40,8 @@ a headless browser that is used to save image screenshots of the generated HTML
 diffs.  Fortunately there are packages you can download for major platforms, and
 helpful [install](https://gist.github.com/julionc/7476620) examples.
 
-1. install [PhantomJS](http://phantomjs.org)
-1. install [Python 3](https://python.org)
+1. install [PhantomJS]
+1. install [Python 3]
 1. `pip3 install diffengine`
 
 ## Run
@@ -100,6 +100,8 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
+[PhantomJS]: http://phantomjs.org
+[Python3]: https://python.org
 
 [wapo_diff]: https://twitter.com/wapo_diff
 [The Washington Post]: https://www.washingtonpost.com
