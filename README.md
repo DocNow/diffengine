@@ -88,6 +88,7 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 * [torstar_diff]: edits to [The Toronto Star]
 * [globemail_diff]: edits to the [The Globe and Mail]
 * [canadaland_diff]: edits to [Canadaland]
+* [repubblica_diff]: edits to [La Repubblica]
 
 ## Develop
 
@@ -119,3 +120,7 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 [canadaland_diff]: https://twitter.com/canadaland_diff
 [Canadaland]: http://www.canadalandshow.com/
+
+[repubblica_diff]: https://twitter.com/repubblica_diff
+[La Repubblica]: http://www.repubblica.it/
+
