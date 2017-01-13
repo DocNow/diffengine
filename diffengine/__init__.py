@@ -127,6 +127,10 @@ class Entry(BaseModel):
         # fetch the current readability-ized content for the page
         logging.info("checking %s", self.url)
         resp = requests.get(self.url, headers={"User-Agent": UA})
+        if resp.status_code != 200:
+            logging.warn("Got %s when fetching %s", resp.status_code, self.url)
+            return
+
         doc = readability.Document(resp.text)
         title = doc.title()
         summary = doc.summary(html_partial=True)
