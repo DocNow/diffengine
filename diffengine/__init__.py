@@ -428,6 +428,7 @@ def main():
         home = sys.argv[1]
 
     init(home)
+    start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
     
     for f in config.get('feeds', []):
@@ -445,7 +446,7 @@ def main():
             if version and version.diff and 'twitter' in f:
                 tweet_diff(version.diff, f['twitter'])
 
-    logging.info("shutting down")
+    logging.info("shutting down: %s", (datetime.utcnow() - start_time)) 
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
