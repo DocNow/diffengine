@@ -1,5 +1,5 @@
 import os
-import PIL
+import re
 import pytest
 import shutil
 
@@ -38,6 +38,8 @@ def test_diff():
     v2 = e.get_latest(force=True)
     assert type(v2) == EntryVersion
     assert v2.diff
+    assert re.match("^https://wayback.archive.org/web/[0-9]+/.+$",
+                    v2.archive_url) is not None
 
     diff = v2.diff
     assert diff.old == v1

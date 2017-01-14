@@ -220,20 +220,20 @@ class EntryVersion(BaseModel):
         return "<h1>%s</h1>\n\n%s" % (self.title, self.summary)
 
     def archive(self):
-        resp = requests.post('https://pragma.archivelab.org',
-                             json={'url': self.url},
-                             headers={"User-Agent": UA})
-        data = resp.json()
-        if 'wayback_id' not in data:
-            logging.error("unexpected archive.org response: %s ; headers=%s", 
-                      json.dumps(data),
-                      resp.headers)
+        try:
+            save_url = "https://web.archive.org/save/" + self.url
+            resp = requests.get(save_url, headers={"User-Agent": UA})
+            wayback_id = resp.headers.get("Content-Location")
+            self.archive_url = "https://wayback.archive.org" + wayback_id
+            logging.info("archived version at %s", self.archive_url)
+            self.save()
+            return self.archive_url
+        except Exception as e:
+            logging.error(
+                "unexpected archive.org response for %s ; headers=%s ; %s", 
+                save_url, resp.headers, e
+            )
             return
-        wayback_id = data['wayback_id']
-        self.archive_url = "https://wayback.archive.org" + wayback_id
-        logging.info("archived version at %s", self.archive_url)
-        self.save()
-
 
 class Diff(BaseModel):
     old = ForeignKeyField(EntryVersion, related_name="prev_diffs")
