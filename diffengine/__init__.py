@@ -402,7 +402,7 @@ def tweet_diff(diff, token):
     if len(status) >= 85:
         status = status[0:85] + "…"
 
-    status += " " + diff.old.archive_url +  " -> " + diff.new.archive_url
+    status += " " + diff.old.archive_url +  " ➜ " + diff.new.archive_url
 
     try:
         twitter.update_with_media(diff.thumbnail_path, status)
