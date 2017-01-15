@@ -8,3 +8,4 @@ diffs/*
 .eggs
 test
 diffengine.egg-info
+build

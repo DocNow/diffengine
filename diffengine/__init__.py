@@ -431,20 +431,23 @@ def main():
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
     
-    for f in config.get('feeds', []):
+    try:
+        for f in config.get('feeds', []):
 
-        feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
-        if created:
-            logging.debug("created new feed for %s", f['url'])
+            feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
+            if created:
+                logging.debug("created new feed for %s", f['url'])
 
-        # get latest feed entries
-        feed.get_latest()
-        
-        # get latest content for each entry
-        for entry in feed.entries:
-            version = entry.get_latest()
-            if version and version.diff and 'twitter' in f:
-                tweet_diff(version.diff, f['twitter'])
+            # get latest feed entries
+            feed.get_latest()
+            
+            # get latest content for each entry
+            for entry in feed.entries:
+                version = entry.get_latest()
+                if version and version.diff and 'twitter' in f:
+                    tweet_diff(version.diff, f['twitter'])
+    except Exception as e:
+        logging.error("unable to access: %s due to %s", f['url'], e)
 
     logging.info("shutting down: %s", (datetime.utcnow() - start_time)) 
 
