@@ -2,7 +2,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.0.1 (+https://github.com/edsu/diffengine)"
+UA = "diffengine/0.0.25 (+https://github.com/edsu/diffengine)"
 
 import os
 import re
@@ -63,7 +63,7 @@ class Feed(BaseModel):
                 logging.info("found new entry: %s", e.link)
             elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
                 FeedEntry.create(entry=entry, feed=self)
-                logging.info("found entry from another feed: %s", e.link)
+                logging.debug("found entry from another feed: %s", e.link)
 
 
 class Entry(BaseModel):
@@ -306,6 +306,7 @@ def setup_logging():
         filename=path,
         filemode="a"
     )
+    logging.getLogger("readability.readability").setLevel(logging.WARNING)
 
 def load_config(prompt=True):
     global config
