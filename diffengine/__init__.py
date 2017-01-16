@@ -128,7 +128,12 @@ class Entry(BaseModel):
 
         # fetch the current readability-ized content for the page
         logging.info("checking %s", self.url)
-        resp = requests.get(self.url, headers={"User-Agent": UA})
+        try:
+            resp = requests.get(self.url, headers={"User-Agent": UA})
+        except Exception as e:
+            logging.error("unable to fetch %s: %s", self.url, e)
+            return None
+
         if resp.status_code != 200:
             logging.warn("Got %s when fetching %s", resp.status_code, self.url)
             return None
