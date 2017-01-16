@@ -433,7 +433,7 @@ def main():
     logging.info("starting up with home=%s", home)
     
     checked = skipped = new = 0
-    
+
     try:
         for f in config.get('feeds', []):
             feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
@@ -451,7 +451,7 @@ def main():
                 checked += 1
                 version = entry.get_latest()
                 if version:
-                    new_count += 1
+                    new += 1
                 if version and version.diff and 'twitter' in f:
                     tweet_diff(version.diff, f['twitter'])
     except Exception as e:
