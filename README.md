@@ -15,16 +15,16 @@ NewsDiffs provides a comprehensive framework for watching changes on multiple
 sites (Washington Post, New York Times, CNN, BBC, etc) but you need to be a
 programmer to add a [parser
 module](https://github.com/ecprice/newsdiffs/tree/master/parsers) for a website
-that you want to monitor. It is also full on website which involves some
+that you want to monitor. It is also a full-on website which involves some
 commitment to install and run.
 
-With the help of [feedparser] diffengine takes a different approach of working
+With the help of [feedparser], diffengine takes a different approach by working
 with any site that publishes an RSS feed of changes. This covers many news
 organizations, but also personal blogs and organizational websites that put out
-regular updates. And with the [readability] module diffengine is able to
+regular updates. And with the [readability] module, diffengine is able to
 automatically extract the primary content of pages, without requiring special
 parsing to remove boilerplate material. And like NYTDiff, instead of creating
-another website for people to watch diffengine pushes updates out to social
+another website for people to watch, diffengine pushes updates out to social
 media where people are already, while also building a local database of diffs
 that can be used for research purposes.
 
