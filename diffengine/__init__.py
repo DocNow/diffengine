@@ -53,17 +53,20 @@ class Feed(BaseModel):
         """
         logging.info("fetching feed: %s", self.url)
         feed = feedparser.parse(self.url)
-        for e in feed.entries:
-            # TODO: look up with url only, because there may be 
-            # overlap bewteen feeds, especially when a large newspaper
-            # has multiple feeds
-            entry, created = Entry.get_or_create(url=e.link)
-            if created:
-                FeedEntry.create(entry=entry, feed=self)
-                logging.info("found new entry: %s", e.link)
-            elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
-                FeedEntry.create(entry=entry, feed=self)
-                logging.info("found entry from another feed: %s", e.link)
+        try:
+            for e in feed.entries:
+                # TODO: look up with url only, because there may be 
+                # overlap bewteen feeds, especially when a large newspaper
+                # has multiple feeds
+                entry, created = Entry.get_or_create(url=e.link)
+                if created:
+                    FeedEntry.create(entry=entry, feed=self)
+                    logging.info("found new entry: %s", e.link)
+                elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
+                    FeedEntry.create(entry=entry, feed=self)
+                    logging.info("found entry from another feed: %s", e.link)
+        except Exception as e:
+            logging.error("unable to feed feed: %s due to %s", self.url, e)
 
 
 class Entry(BaseModel):
@@ -434,28 +437,25 @@ def main():
     
     checked = skipped = new = 0
 
-    try:
-        for f in config.get('feeds', []):
-            feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
-            if created:
-                logging.debug("created new feed for %s", f['url'])
+    for f in config.get('feeds', []):
+        feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
+        if created:
+            logging.debug("created new feed for %s", f['url'])
 
-            # get latest feed entries
-            feed.get_latest()
-            
-            # get latest content for each entry
-            for entry in feed.entries:
-                if not entry.stale:
-                    skipped += 1
-                    continue
-                checked += 1
-                version = entry.get_latest()
-                if version:
-                    new += 1
-                if version and version.diff and 'twitter' in f:
-                    tweet_diff(version.diff, f['twitter'])
-    except Exception as e:
-        logging.error("unable to access: %s due to %s", f['url'], e)
+        # get latest feed entries
+        feed.get_latest()
+        
+        # get latest content for each entry
+        for entry in feed.entries:
+            if not entry.stale:
+                skipped += 1
+                continue
+            checked += 1
+            version = entry.get_latest()
+            if version:
+                new += 1
+            if version and version.diff and 'twitter' in f:
+                tweet_diff(version.diff, f['twitter'])
 
     elapsed = datetime.utcnow() - start_time
     logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s", 
