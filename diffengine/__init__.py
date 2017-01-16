@@ -57,7 +57,7 @@ class Feed(BaseModel):
         except Exception as e:
             logging.error("unable to fetch feed %s: %s", self.url, e)
         for e in feed.entries:
-            # TODO: look up with url only, because there may be 
+            # note: look up with url only, because there may be 
             # overlap bewteen feeds, especially when a large newspaper
             # has multiple feeds
             entry, created = Entry.get_or_create(url=e.link)
