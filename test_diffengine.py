@@ -66,3 +66,11 @@ def test_many_to_many():
 
     e = Entry.get(Entry.url==url)
     assert FeedEntry.select().where(FeedEntry.entry==e).count() == 2
+
+def test_bad_feed_url():
+    # bad feed url shouldn't cause a fatal exception
+    f = Feed.create(name="feed1", url="http://example.org/feedfeed.xml")
+    f.get_latest()
+    assert True
+
+

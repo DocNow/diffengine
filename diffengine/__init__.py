@@ -52,21 +52,21 @@ class Feed(BaseModel):
         Gets the feed and creates new entries for new content.
         """
         logging.info("fetching feed: %s", self.url)
-        feed = feedparser.parse(self.url)
         try:
-            for e in feed.entries:
-                # TODO: look up with url only, because there may be 
-                # overlap bewteen feeds, especially when a large newspaper
-                # has multiple feeds
-                entry, created = Entry.get_or_create(url=e.link)
-                if created:
-                    FeedEntry.create(entry=entry, feed=self)
-                    logging.info("found new entry: %s", e.link)
-                elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
-                    FeedEntry.create(entry=entry, feed=self)
-                    logging.debug("found entry from another feed: %s", e.link)
+            feed = feedparser.parse(self.url)
         except Exception as e:
-            logging.error("unable to feed feed: %s due to %s", self.url, e)
+            logging.error("unable to fetch feed %s: %s", self.url, e)
+        for e in feed.entries:
+            # TODO: look up with url only, because there may be 
+            # overlap bewteen feeds, especially when a large newspaper
+            # has multiple feeds
+            entry, created = Entry.get_or_create(url=e.link)
+            if created:
+                FeedEntry.create(entry=entry, feed=self)
+                logging.info("found new entry: %s", e.link)
+            elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
+                FeedEntry.create(entry=entry, feed=self)
+                logging.debug("found entry from another feed: %s", e.link)
 
 class Entry(BaseModel):
     url = CharField()
