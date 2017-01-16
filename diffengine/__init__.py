@@ -109,17 +109,17 @@ class Entry(BaseModel):
         logging.debug("%s not stale (r=%f)", self.url, r)
         return False
 
-    def get_latest(self, force=True):
+    def get_latest(self):
         """
-        get_latest is the heart of the application. If the entry is stale
-        it will get the current version on the web, extract its summary with 
-        readability and compare it against a previous version. If a difference
-        is found it will compute the diff, save it as html and png files, and
-        tell Internet Archive to create a snapshot.
-        """
+        get_latest is the heart of the application. It will get the current 
+        version on the web, extract its summary with readability and compare 
+        it against a previous version. If a difference is found it will 
+        compute the diff, save it as html and png files, and tell Internet 
+        Archive to create a snapshot.
 
-        if not self.stale and not force:
-            return
+        If a new version was found it will be returned, otherwise None will
+        be returned.
+        """
 
         # make sure we don't go too fast
         time.sleep(1)
@@ -129,7 +129,7 @@ class Entry(BaseModel):
         resp = requests.get(self.url, headers={"User-Agent": UA})
         if resp.status_code != 200:
             logging.warn("Got %s when fetching %s", resp.status_code, self.url)
-            return
+            return None
 
         doc = readability.Document(resp.text)
         title = doc.title()
@@ -175,6 +175,7 @@ class Entry(BaseModel):
 
         self.checked = datetime.utcnow()
         self.save()
+
         return new
 
 
@@ -431,8 +432,9 @@ def main():
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
     
-    for f in config.get('feeds', []):
+    checked = skipped = new = 0
 
+    for f in config.get('feeds', []):
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
         if created:
             logging.debug("created new feed for %s", f['url'])
@@ -442,11 +444,19 @@ def main():
         
         # get latest content for each entry
         for entry in feed.entries:
+            if not entry.stale:
+                skipped += 1
+                continue
+            checked += 1
             version = entry.get_latest()
+            if version:
+                new_count += 1
             if version and version.diff and 'twitter' in f:
                 tweet_diff(version.diff, f['twitter'])
 
-    logging.info("shutting down: %s", (datetime.utcnow() - start_time)) 
+    elapsed = datetime.utcnow() - start_time
+    logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s", 
+        new, checked, skipped, elapsed)
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
