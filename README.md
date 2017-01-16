@@ -129,3 +129,6 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 [cbc_diff]: https://twitter.com/cbc_diff
 [The Canadian Broadcasting Corporation]: http://www.cbc.ca/
+
+[lapresse_diff]: https://twitter.com/lapresse_diff
+[La Presse]: http://www.lapresse.ca/
