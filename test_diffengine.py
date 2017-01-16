@@ -35,7 +35,7 @@ def test_diff():
     v1.summary = v1.summary[0:-20]
     v1.save()
 
-    v2 = e.get_latest(force=True)
+    v2 = e.get_latest()
     assert type(v2) == EntryVersion
     assert v2.diff
     assert re.match("^https://wayback.archive.org/web/[0-9]+/.+$",
