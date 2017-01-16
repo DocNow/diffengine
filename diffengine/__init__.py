@@ -450,7 +450,7 @@ def main():
             checked += 1
             version = entry.get_latest()
             if version:
-                new_count += 1
+                new += 1
             if version and version.diff and 'twitter' in f:
                 tweet_diff(version.diff, f['twitter'])
 
