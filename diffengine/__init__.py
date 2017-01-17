@@ -145,6 +145,7 @@ class Entry(BaseModel):
         summary = summary.replace("\xa0", " ")
         summary = summary.replace('“', '"')
         summary = summary.replace('”', '"')
+        summary = summary.replace("’", "'")
 
         # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
