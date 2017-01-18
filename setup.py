@@ -14,7 +14,7 @@ deps = [htmldiff]
 
 setup(
     name="diffengine",
-    version="0.0.27",
+    version="0.0.28",
     author="Ed Summers",
     author_email="ehs@pobox.com",
     packages=find_packages(exclude=['test_diffengine']),
