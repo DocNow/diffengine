@@ -30,7 +30,7 @@ that can be used for research purposes.
 
 ## Install 
 
-1. install [PhantomJS] - also, see [install examples]
+1. install [PhantomJS]
 1. install [Python 3]
 1. `pip3 install --process-dependency-links diffengine`
 
