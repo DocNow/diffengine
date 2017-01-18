@@ -108,7 +108,7 @@ accounts.
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
-Here's how to get started hacking on diffengine with pyenv:
+Here's how to get started hacking on diffengine with [pyenv]:
 
 ```
 % pyenv virtualenv 3.6.0 diffengine
