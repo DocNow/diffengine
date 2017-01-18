@@ -89,7 +89,18 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 * [globemail_diff]: edits to the [The Globe and Mail]
 * [canadaland_diff]: edits to [Canadaland]
 * [repubblica_diff]: edits to [La Repubblica]
+* [yyc_herald_diff]: edits to the [Calgary Herald]
+* [cbc_diff]: edits to [The Canadian Broadcasting Corporation]
 * [lapresse_diff]: edits to [La Presse]
+* [bbc_diff]: edits to the [BBC]
+* [rt_edits]: edits to [RT]
+* [fox_diff]: edits to [Fox News]
+* [dailymail_diff]: edits to the [Daily Mail]
+* [telegraph_diff]: edits to the [Telegraph]
+* [cnn_diff]: edits to [CNN]
+* [reuters_diff]: edits to [Reuters]
+* [ap_diff]: edits to the [AP]
+* [Ryan Baumann's "diffengine" Twitter list] aggregates many of these accounts
 
 ## Develop
 
@@ -152,3 +163,29 @@ test_diffengine.py .....
 
 [lapresse_diff]: https://twitter.com/lapresse_diff
 [La Presse]: http://www.lapresse.ca/
+
+[bbc_diff]: https://twitter.com/bbc_diff
+[BBC]: http://www.bbc.co.uk/
+
+[rt_edits]: https://twitter.com/rt_edits
+[RT]: http://rt.com
+
+[fox_diff]: https://twitter.com/fox_diff
+[Fox News]: http://www.foxnews.com/
+
+[dailymail_diff]: https://twitter.com/dailymail_diff
+[Daily Mail]: http://www.dailymail.co.uk/
+
+[telegraph_diff]: https://twitter.com/telegraph_diff
+[Telegraph]: http://www.telegraph.co.uk/
+
+[cnn_diff]: https://twitter.com/cnn_diff
+[CNN]: http://www.cnn.com/
+
+[reuters_diff]: https://twitter.com/reuters_diff
+[Reuters]: http://www.reuters.com/
+
+[ap_diff]: https://twitter.com/ap_diff
+[AP]: https://www.ap.org/
+
+[Ryan Baumann's "diffengine" Twitter list]: https://twitter.com/ryanfb/lists/diffengine
