@@ -229,8 +229,8 @@ class EntryVersion(BaseModel):
         return "<h1>%s</h1>\n\n%s" % (self.title, self.summary)
 
     def archive(self):
+        save_url = "https://web.archive.org/save/" + self.url
         try:
-            save_url = "https://web.archive.org/save/" + self.url
             resp = requests.get(save_url, headers={"User-Agent": UA})
             wayback_id = resp.headers.get("Content-Location")
             self.archive_url = "https://wayback.archive.org" + wayback_id
@@ -238,10 +238,7 @@ class EntryVersion(BaseModel):
             self.save()
             return self.archive_url
         except Exception as e:
-            logging.error(
-                "unexpected archive.org response for %s ; headers=%s ; %s", 
-                save_url, resp.headers, e
-            )
+            logging.error("unexpected archive.org response for %s: %s", save_url, e)
             return
 
 class Diff(BaseModel):
