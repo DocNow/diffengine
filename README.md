@@ -103,7 +103,7 @@ accounts.
 * [torstar_diff]: edits to [The Toronto Star]
 * [wapo_diff]: edits to [The Washington Post]
 * [yyc_herald_diff]: edits to the [Calgary Herald]
-*
+
 ## Develop
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
