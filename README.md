@@ -135,6 +135,8 @@ test_diffengine.py .....
 [PhantomJS]: http://phantomjs.org
 [Python 3]: https://python.org
 [create an issue]: https://github.com/DocNow/diffengine/issues
+[pyenv]: https://github.com/yyuu/pyenv
+[Ryan Baumann's "diffengine" Twitter list]: https://twitter.com/ryanfb/lists/diffengine
 
 [wapo_diff]: https://twitter.com/wapo_diff
 [The Washington Post]: https://www.washingtonpost.com
@@ -190,4 +192,3 @@ test_diffengine.py .....
 [ap_diff]: https://twitter.com/ap_diff
 [AP]: https://www.ap.org/
 
-[Ryan Baumann's "diffengine" Twitter list]: https://twitter.com/ryanfb/lists/diffengine
