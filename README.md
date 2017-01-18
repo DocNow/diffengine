@@ -82,6 +82,11 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
 ## Examples
 
+Here is a list of known diffengine Twitter accounts. If you start one please
+send us a pull request or [create an issue] so it can be added here. For
+convenience [Ryan Baumann's "diffengine" Twitter list] aggregates many of these
+accounts.
+
 * [wapo_diff]: edits to [The Washington Post]
 * [breitbart_diff]: edits to [Breitbart News]
 * [guardian_diff]: edits to [The Guardian]
@@ -100,7 +105,6 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 * [cnn_diff]: edits to [CNN]
 * [reuters_diff]: edits to [Reuters]
 * [ap_diff]: edits to the [AP]
-* [Ryan Baumann's "diffengine" Twitter list] aggregates many of these accounts
 
 ## Develop
 
@@ -132,7 +136,8 @@ test_diffengine.py .....
 [readability]: https://github.com/buriy/python-readability
 [PhantomJS]: http://phantomjs.org
 [Python 3]: https://python.org
-[install examples]: https://gist.github.com/julionc/7476620
+[install examples]: https://gist.github.com/julionc/7476620 
+[create an issue]: https://github.com/DocNow/diffengine/issues
 
 [wapo_diff]: https://twitter.com/wapo_diff
 [The Washington Post]: https://www.washingtonpost.com
