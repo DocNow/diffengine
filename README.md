@@ -102,6 +102,7 @@ accounts.
 * [telegraph_diff]: edits to the [Telegraph]
 * [torstar_diff]: edits to [The Toronto Star]
 * [wapo_diff]: edits to [The Washington Post]
+* [whitehouse_diff]: edits to the [White House Blog]
 * [yyc_herald_diff]: edits to the [Calgary Herald]
 
 ## Develop
@@ -192,3 +193,5 @@ test_diffengine.py .....
 [ap_diff]: https://twitter.com/ap_diff
 [AP]: https://www.ap.org/
 
+[whitehouse_diff]: https://twitter.com/whitehouse_diff
+[White House Blog]: https://www.whitehouse.gov/blog
