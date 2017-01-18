@@ -87,25 +87,25 @@ send us a pull request or [create an issue] so it can be added here. For
 convenience [Ryan Baumann's "diffengine" Twitter list] aggregates many of these
 accounts.
 
-* [wapo_diff]: edits to [The Washington Post]
-* [breitbart_diff]: edits to [Breitbart News]
-* [guardian_diff]: edits to [The Guardian]
-* [torstar_diff]: edits to [The Toronto Star]
-* [globemail_diff]: edits to the [The Globe and Mail]
-* [canadaland_diff]: edits to [Canadaland]
-* [repubblica_diff]: edits to [La Repubblica]
-* [yyc_herald_diff]: edits to the [Calgary Herald]
-* [cbc_diff]: edits to [The Canadian Broadcasting Corporation]
-* [lapresse_diff]: edits to [La Presse]
-* [bbc_diff]: edits to the [BBC]
-* [rt_edits]: edits to [RT]
-* [fox_diff]: edits to [Fox News]
-* [dailymail_diff]: edits to the [Daily Mail]
-* [telegraph_diff]: edits to the [Telegraph]
-* [cnn_diff]: edits to [CNN]
-* [reuters_diff]: edits to [Reuters]
 * [ap_diff]: edits to the [AP]
-
+* [bbc_diff]: edits to the [BBC]
+* [breitbart_diff]: edits to [Breitbart News]
+* [canadaland_diff]: edits to [Canadaland]
+* [cbc_diff]: edits to [The Canadian Broadcasting Corporation]
+* [cnn_diff]: edits to [CNN]
+* [dailymail_diff]: edits to the [Daily Mail]
+* [fox_diff]: edits to [Fox News]
+* [globemail_diff]: edits to the [The Globe and Mail]
+* [guardian_diff]: edits to [The Guardian]
+* [lapresse_diff]: edits to [La Presse]
+* [repubblica_diff]: edits to [La Repubblica]
+* [reuters_diff]: edits to [Reuters]
+* [rt_edits]: edits to [RT]
+* [telegraph_diff]: edits to the [Telegraph]
+* [torstar_diff]: edits to [The Toronto Star]
+* [wapo_diff]: edits to [The Washington Post]
+* [yyc_herald_diff]: edits to the [Calgary Herald]
+*
 ## Develop
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
