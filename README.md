@@ -136,7 +136,6 @@ test_diffengine.py .....
 [readability]: https://github.com/buriy/python-readability
 [PhantomJS]: http://phantomjs.org
 [Python 3]: https://python.org
-[install examples]: https://gist.github.com/julionc/7476620 
 [create an issue]: https://github.com/DocNow/diffengine/issues
 
 [wapo_diff]: https://twitter.com/wapo_diff
