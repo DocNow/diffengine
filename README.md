@@ -89,10 +89,30 @@ chose, so in my case `/home/ed/.diffengine/config.yaml`.
 * [globemail_diff]: edits to the [The Globe and Mail]
 * [canadaland_diff]: edits to [Canadaland]
 * [repubblica_diff]: edits to [La Repubblica]
+* [lapresse_diff]: edits to [La Presse]
 
 ## Develop
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
+
+Here's how to get started hacking on diffengine with pyenv:
+
+```
+% pyenv virtualenv 3.6.0 diffengine
+% pyenv activate diffengine
+% git clone https://github.com/docnow/diffengine 
+% cd diffengine
+% pip install -r requirements
+% pytest
+============================= test session starts ==============================
+platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+rootdir: /home/ed/Projects/diffengine, inifile:
+collected 5 items
+
+test_diffengine.py .....
+
+=========================== 5 passed in 8.09 seconds ===========================
+```
 
 [nyt_diff]: https://twitter.com/nyt_diff
 [NYTDiff]: https://github.com/j-e-d/NYTdiff
