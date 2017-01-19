@@ -314,6 +314,7 @@ def setup_logging():
         filemode="a"
     )
     logging.getLogger("readability.readability").setLevel(logging.WARNING)
+    logging.getLogger("tweepy.binder").setLevel(logging.WARNING)
 
 def load_config(prompt=True):
     global config
