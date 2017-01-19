@@ -230,13 +230,18 @@ class EntryVersion(BaseModel):
         try:
             resp = requests.get(save_url, headers={"User-Agent": UA})
             wayback_id = resp.headers.get("Content-Location")
-            self.archive_url = "https://wayback.archive.org" + wayback_id
-            logging.info("archived version at %s", self.archive_url)
-            self.save()
-            return self.archive_url
+            if wayback_id:
+                self.archive_url = "https://wayback.archive.org" + wayback_id
+                logging.info("archived version at %s", self.archive_url)
+                self.save()
+                return self.archive_url
+            else:
+                logging.info("unable to get archive id for %s: %s", url, 
+                    resp.headers)
+
         except Exception as e:
             logging.error("unexpected archive.org response for %s: %s", save_url, e)
-            return
+        return None
 
 class Diff(BaseModel):
     old = ForeignKeyField(EntryVersion, related_name="prev_diffs")
