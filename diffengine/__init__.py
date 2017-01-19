@@ -236,8 +236,8 @@ class EntryVersion(BaseModel):
                 self.save()
                 return self.archive_url
             else:
-                logging.error("unable to get archive id for %s: %s", url, 
-                    resp.headers)
+                logging.error("unable to get archive id from %s: %s",
+                        self.archive_url, resp.headers)
 
         except Exception as e:
             logging.error("unexpected archive.org response for %s: %s", save_url, e)
