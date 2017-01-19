@@ -148,7 +148,7 @@ class Entry(BaseModel):
         canonical_url = _remove_utm(resp.url)
 
         # get the latest version, if we have one
-        versions = EntryVersion.select().where(EntryVersion.entry==self)
+        versions = EntryVersion.select().where(EntryVersion.url==canonical_url)
         versions = versions.order_by(-EntryVersion.created)
         if len(versions) == 0:
             old = None
