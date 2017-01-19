@@ -477,6 +477,7 @@ def _normal(s):
     s = s.replace('”', '"')
     s = s.replace("’", "'")
     s = s.replace("\n", " ")
+    s = s.replace("­", "") 
     s = re.sub(r'  +', ' ', s)
     return s
 
