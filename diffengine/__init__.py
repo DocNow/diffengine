@@ -142,15 +142,10 @@ class Entry(BaseModel):
         title = doc.title()
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
+        summary = _normal(summary)
 
         # in case there was a redirect, and remove utm style marketing
         canonical_url = _remove_utm(resp.url)
-
-        # little cleanups that should be in a function if they grow more
-        summary = summary.replace("\xa0", " ")
-        summary = summary.replace('“', '"')
-        summary = summary.replace('”', '"')
-        summary = summary.replace("’", "'")
 
         # get the latest version, if we have one
         versions = EntryVersion.select().where(EntryVersion.entry==self)
@@ -164,7 +159,9 @@ class Entry(BaseModel):
         # new version if it looks different, or is brand new (no old version)
         new = None
 
-        if not old or old.title != title or old.summary != summary:
+        # reapply _normal to what is stored in case normalization rules
+        # change over time
+        if not old or old.title != title or _normal(old.summary) != summary:
             new = EntryVersion.create(
                 title=title,
                 url=canonical_url,
@@ -466,6 +463,17 @@ def main():
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _normal(s):
+    # additional normalizations for readability + bleached text
+    s = s.replace("\xa0", " ")
+    s = s.replace('“', '"')
+    s = s.replace('”', '"')
+    s = s.replace("’", "'")
+    s = s.replace("\n", " ")
+    s = re.sub(r'  +', ' ', s)
+    return s
 
 def _remove_utm(url):
     u = urlparse(url)

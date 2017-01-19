@@ -73,4 +73,15 @@ def test_bad_feed_url():
     f.get_latest()
     assert True
 
+def test_whitespace():
+    f = Feed.get(url="https://inkdroid.org/feed.xml")
+    e = f.entries[0]
+    v1 = e.versions[-1]
 
+    # add some whitespace
+    v1.summary = v1.summary + "\n\n    "
+    v1.save()
+
+    # whitespace should not count when diffing
+    v2 = e.get_latest()
+    assert v2 == None
