@@ -2,7 +2,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.0.25 (+https://github.com/edsu/diffengine)"
+UA = "diffengine/0.0.29 (+https://github.com/edsu/diffengine)"
 
 import os
 import re
