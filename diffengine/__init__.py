@@ -127,7 +127,7 @@ class Entry(BaseModel):
         time.sleep(1)
 
         # fetch the current readability-ized content for the page
-        logging.info("checking %s", self.url)
+        logging.debug("checking %s", self.url)
         try:
             resp = requests.get(self.url, headers={"User-Agent": UA})
         except Exception as e:
@@ -170,13 +170,13 @@ class Entry(BaseModel):
             )
             new.archive()
             if old:
-                logging.info("found new version %s", old.entry.url)
+                logging.debug("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 diff.generate()
             else:
-                logging.info("found first version: %s", self.url)
+                logging.debug("found first version: %s", self.url)
         else:
-            logging.info("content hasn't changed %s", self.url)
+            logging.debug("content hasn't changed %s", self.url)
 
         self.checked = datetime.utcnow()
         self.save()
@@ -232,11 +232,11 @@ class EntryVersion(BaseModel):
             wayback_id = resp.headers.get("Content-Location")
             if wayback_id:
                 self.archive_url = "https://wayback.archive.org" + wayback_id
-                logging.info("archived version at %s", self.archive_url)
+                logging.debug("archived version at %s", self.archive_url)
                 self.save()
                 return self.archive_url
             else:
-                logging.info("unable to get archive id for %s: %s", url, 
+                logging.error("unable to get archive id for %s: %s", url, 
                     resp.headers)
 
         except Exception as e:
@@ -275,7 +275,7 @@ class Diff(BaseModel):
         if os.path.isfile(self.html_path):
             return
         tmpl_path = os.path.join(os.path.dirname(__file__), "diff.html")
-        logging.info("creating html diff: %s", self.html_path)
+        logging.debug("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
         tmpl = jinja2.Template(codecs.open(tmpl_path, "r", "utf8").read())
         html = tmpl.render(
@@ -295,11 +295,11 @@ class Diff(BaseModel):
         if not hasattr(self, 'browser'):
             phantomjs = config.get('phantomjs', 'phantomjs')
             self.browser = webdriver.PhantomJS(phantomjs)
-        logging.info("creating image screenshot %s", self.screenshot_path)
+        logging.debug("creating image screenshot %s", self.screenshot_path)
         self.browser.set_window_size(1400, 1000)
         self.browser.get(self.html_path)
         self.browser.save_screenshot(self.screenshot_path)
-        logging.info("creating image thumbnail %s", self.thumbnail_path)
+        logging.debug("creating image thumbnail %s", self.thumbnail_path)
         self.browser.set_window_size(800, 400)
         self.browser.execute_script("clip()")
         self.browser.save_screenshot(self.thumbnail_path)
