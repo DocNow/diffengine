@@ -103,6 +103,7 @@ accounts.
 * [torstar_diff]: edits to [The Toronto Star]
 * [wapo_diff]: edits to [The Washington Post]
 * [whitehouse_diff]: edits to the [White House Blog]
+* [wsj_diff]: edits to the [Wall Street Journal]
 * [yyc_herald_diff]: edits to the [Calgary Herald]
 
 ## Develop
@@ -195,3 +196,6 @@ test_diffengine.py .....
 
 [whitehouse_diff]: https://twitter.com/whitehouse_diff
 [White House Blog]: https://www.whitehouse.gov/blog
+
+[wjs_diff]: https://twitter.com/wsj_diff
+[Wall Street Journal]: http://www.wsj.com/
