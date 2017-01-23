@@ -197,5 +197,5 @@ test_diffengine.py .....
 [whitehouse_diff]: https://twitter.com/whitehouse_diff
 [White House Blog]: https://www.whitehouse.gov/blog
 
-[wjs_diff]: https://twitter.com/wsj_diff
+[wsj_diff]: https://twitter.com/wsj_diff
 [Wall Street Journal]: http://www.wsj.com/
