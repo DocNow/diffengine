@@ -74,7 +74,7 @@ my crontab to run every 30 minutes to look for new content.
 
     0,30 * * * * /usr/local/bin/diffengine /home/ed/.diffengine
 
-You can examine your config file at any time and add/remove feeds as needed.  It
+You can examine your config file at any time and add/remove feeds as needed. It
 is the `config.yaml` file that is stored relative to the storage directory you
 chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
@@ -105,6 +105,51 @@ accounts.
 * [whitehouse_diff]: edits to the [White House Blog]
 * [wsj_diff]: edits to the [Wall Street Journal]
 * [yyc_herald_diff]: edits to the [Calgary Herald]
+
+## Multiple Accounts & Feed Implementation Example
+
+If you are setting multiple accounts, and multiple feeds if may be helpful to setup a 
+directory for each account. For example:
+
+- Toronto Sun `/home/nruest/.torontosun`
+- Toronto Star  `/home/nruest/.torontostar`
+- Globe & Mail `/home/nruest/.globemail`
+- Canadaland `/home/nruest/.canadaland`
+- CBC `/home/nruest/.cbc`
+
+Then you will configure a cron entry for each account:
+
+```
+0,15,30,45 * * * * /usr/bin/flock -xn /tmp/globemail.lock -c "/usr/local/bin/diffengine /home/nruest/.globemail"
+0,15,30,45 * * * * /usr/bin/flock -xn /tmp/torontosun.lock -c "/usr/local/bin/diffengine /home/nruest/.torontosun"
+0,15,30,45 * * * * /usr/bin/flock -xn /tmp/cbc.lock -c "/usr/local/bin/diffengine /home/nruest/.cbc"
+0,15,30,45 * * * * /usr/bin/flock -xn /tmp/lapresse.lock -c "/usr/local/bin/diffengine /home/nruest/.lapresse"
+0,15,30,45 * * * * /usr/bin/flock -xn /tmp/calgaryherald.lock -c "/usr/local/bin/diffengine /home/nruest/.calgaryherald"
+```
+
+If there are multiple feeds for an account, you can setup the `config.yml` like so:
+
+```
+- name: The Globe and Mail - Report on Business
+  twitter:
+    access_token: ACCESS_TOKEN
+    access_token_secret: ACCESS_TOKEN_SECRET
+  url: http://www.theglobeandmail.com/report-on-business/?service=rss
+- name: The Globe and Mail - Opinion
+  twitter:
+    access_token: ACCESS_TOKEN
+    access_token_secret: ACCESS_TOKEN_SECRET
+  url: http://www.theglobeandmail.com/opinion/?service=rss
+- name: The Globe and Mail - News
+  twitter:
+    access_token: ACCESS_TOKEN
+    access_token_secret: ACCESS_TOKEN_SECRET
+  url: http://www.theglobeandmail.com/news/?service=rss
+phantomjs: phantomjs
+twitter:
+  consumer_key: CONSUMER_KEY
+  consumer_secret: CONSUMER_SECRET
+```
 
 ## Develop
 
