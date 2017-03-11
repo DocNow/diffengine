@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.0.35 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.0.36 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -32,9 +32,11 @@ home = None
 config = {}
 db = SqliteDatabase(None)
 
+
 class BaseModel(Model):
     class Meta:
         database = db
+
 
 class Feed(BaseModel):
     url = CharField(primary_key=True)
@@ -50,13 +52,17 @@ class Feed(BaseModel):
 
     def get_latest(self):
         """
-        Gets the feed and creates new entries for new content.
+        Gets the feed and creates new entries for new content. The number
+        of new entries created will be returned.
         """
         logging.info("fetching feed: %s", self.url)
         try:
-            feed = feedparser.parse(self.url)
+            resp = _get(self.url)
+            feed = feedparser.parse(resp.text)
         except Exception as e:
             logging.error("unable to fetch feed %s: %s", self.url, e)
+            return 0
+        count = 0
         for e in feed.entries:
             # note: look up with url only, because there may be 
             # overlap bewteen feeds, especially when a large newspaper
@@ -65,9 +71,14 @@ class Feed(BaseModel):
             if created:
                 FeedEntry.create(entry=entry, feed=self)
                 logging.info("found new entry: %s", e.link)
+                count += 1
             elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
                 FeedEntry.create(entry=entry, feed=self)
                 logging.debug("found entry from another feed: %s", e.link)
+                count += 1
+
+        return count
+
 
 class Entry(BaseModel):
     url = CharField()
@@ -130,7 +141,7 @@ class Entry(BaseModel):
         # fetch the current readability-ized content for the page
         logging.debug("checking %s", self.url)
         try:
-            resp = requests.get(self.url, headers={"User-Agent": UA})
+            resp = _get(self.url)
         except Exception as e:
             logging.error("unable to fetch %s: %s", self.url, e)
             return None
@@ -232,7 +243,7 @@ class EntryVersion(BaseModel):
     def archive(self):
         save_url = "https://web.archive.org/save/" + self.url
         try:
-            resp = requests.get(save_url, headers={"User-Agent": UA})
+            resp = _get(save_url)
             wayback_id = resp.headers.get("Content-Location")
             if wayback_id:
                 self.archive_url = "https://wayback.archive.org" + wayback_id
@@ -321,8 +332,7 @@ def setup_logging():
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         filename=path,
-        filemode="a",
-        encoding="utf8"
+        filemode="a"
     )
     logging.getLogger("readability.readability").setLevel(logging.WARNING)
     logging.getLogger("tweepy.binder").setLevel(logging.WARNING)
@@ -507,6 +517,9 @@ def _remove_utm(url):
         urlencode(new_q, doseq=True),
         u.fragment
     ])
+
+def _get(url):
+    return requests.get(url, timeout=60, headers={"User-Agent": UA})
 
 if __name__ == "__main__":
     main()

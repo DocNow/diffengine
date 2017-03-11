@@ -71,10 +71,10 @@ def test_many_to_many():
     # large media organizations with multiple topical feeds
     url="https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
 
-    f1 = Feed.create(name="feed1", url="file:test-data/feed1.xml")
+    f1 = Feed.create(name="feed1", url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed1.xml")
     f1.get_latest()
 
-    f2 = Feed.create(name="feed2", url="file:test-data/feed2.xml")
+    f2 = Feed.create(name="feed2", url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed2.xml")
     f2.get_latest()
 
     assert f1.entries.where(Entry.url==url).count() == 1
