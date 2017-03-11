@@ -171,9 +171,8 @@ class Entry(BaseModel):
         # new version if it looks different, or is brand new (no old version)
         new = None
 
-        # reapply _normal to what is stored in case normalization rules
-        # change over time
-        if not old or old.title != title or _normal(old.summary) != summary:
+        # reapply _fingerprint to what is stored in case the method changes
+        if not old or old.title != title or not _equal(old.summary, summary):
             new = EntryVersion.create(
                 title=title,
                 url=canonical_url,
@@ -502,6 +501,14 @@ def _normal(s):
     s = s.replace("­", "") 
     s = re.sub(r'  +', ' ', s)
     s = s.strip()
+    return s
+
+def _equal(s1, s2):
+    return _fingerprint(s1) == _fingerprint(s2)
+
+def _fingerprint(s):
+    s = bleach.clean(s, tags=[], strip=True)
+    s = re.sub(r'\s+', '', s, flags=re.MULTILINE)
     return s
 
 def _remove_utm(url):

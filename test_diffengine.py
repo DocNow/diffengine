@@ -58,7 +58,9 @@ def test_html_diff():
 
     # add a change to the summary that htmldiff ignores
     v1 = e.versions[-1]
-    v1.summary += "<br>"
+    parts = v1.summary.split()
+    parts.insert(2, '<br>   \n')
+    v1.summary = ' '.join(parts)
     v1.save()
 
     v2 = e.get_latest()
@@ -101,3 +103,10 @@ def test_whitespace():
     # whitespace should not count when diffing
     v2 = e.get_latest()
     assert v2 == None
+
+def test_fingerprint():
+    from diffengine import _fingerprint
+    assert _fingerprint("foo bar") == "foobar"
+    assert _fingerprint("foo bar\nbaz") == "foobarbaz"
+    assert _fingerprint("foo<br>bar") == "foobar"
+    assert _fingerprint("foo&nbsp;bar") == "foobar"
