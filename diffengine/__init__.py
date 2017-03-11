@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.0.38 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.0.41 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -22,6 +22,7 @@ import selenium
 import feedparser
 import subprocess
 import readability
+import unicodedata
 
 from peewee import *
 from datetime import datetime, timedelta
@@ -139,7 +140,7 @@ class Entry(BaseModel):
         time.sleep(1)
 
         # fetch the current readability-ized content for the page
-        logging.debug("checking %s", self.url)
+        logging.info("checking %s", self.url)
         try:
             resp = _get(self.url)
         except Exception as e:
@@ -171,7 +172,7 @@ class Entry(BaseModel):
         # new version if it looks different, or is brand new (no old version)
         new = None
 
-        # reapply _fingerprint to what is stored in case the method changes
+        # use _equal to determine if the summaries are the same
         if not old or old.title != title or not _equal(old.summary, summary):
             new = EntryVersion.create(
                 title=title,
@@ -506,9 +507,15 @@ def _normal(s):
 def _equal(s1, s2):
     return _fingerprint(s1) == _fingerprint(s2)
 
+punctuation = dict.fromkeys(i for i in range(sys.maxunicode) 
+        if unicodedata.category(chr(i)).startswith('P'))
+
 def _fingerprint(s):
+    # bleach everything, remove all whitespace and punctuation to create a 
+    # psuedo fingerprint for the text for use during compararison
     s = bleach.clean(s, tags=[], strip=True)
     s = re.sub(r'\s+', '', s, flags=re.MULTILINE)
+    s = s.translate(punctuation)
     return s
 
 def _remove_utm(url):
