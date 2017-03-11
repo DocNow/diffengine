@@ -1,7 +1,8 @@
-python: 
+python:
   - 3.5
   - 3.6
 language: python
+cache: pip
 script: py.test
 after_failure: cat test/diffengine.log
 notifications:
