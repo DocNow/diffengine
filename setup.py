@@ -12,7 +12,7 @@ htmldiff = "https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2"
 reqs.remove(htmldiff)
 reqs.append("htmldiff==0.2")
 deps = [htmldiff]
-version = "0.0.41"
+version = "0.0.42"
 
 if __name__ == "__main__":
     setup(
