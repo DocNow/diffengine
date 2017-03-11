@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.0.37 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.0.38 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -465,7 +465,6 @@ def main():
     checked = skipped = new = 0
 
     for f in config.get('feeds', []):
-        print(dir(Feed))
         feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
         if created:
             logging.debug("created new feed for %s", f['url'])
