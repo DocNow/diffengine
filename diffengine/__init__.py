@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.0.34 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.0.35 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -172,7 +173,10 @@ class Entry(BaseModel):
             if old:
                 logging.debug("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
-                diff.generate()
+                if not diff.generate():
+                    logging.warn("html diff showed no changes: %s", self.url)
+                    new.delete()
+                    new = None
             else:
                 logging.debug("found first version: %s", self.url)
         else:
@@ -267,8 +271,11 @@ class Diff(BaseModel):
         return self.screenshot_path.replace('.jpg', '-thumb.jpg')
 
     def generate(self):
-        self._generate_diff_html()
-        self._generate_diff_images()
+        if self._generate_diff_html():
+            self._generate_diff_images()
+            return True
+        else:
+            return False
 
 
     def _generate_diff_html(self):
@@ -277,6 +284,8 @@ class Diff(BaseModel):
         tmpl_path = os.path.join(os.path.dirname(__file__), "diff.html")
         logging.debug("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
+        if '<ins>' not in diff and '<del>' not in diff:
+            return False
         tmpl = jinja2.Template(codecs.open(tmpl_path, "r", "utf8").read())
         html = tmpl.render(
             title=self.new.title,
@@ -288,6 +297,7 @@ class Diff(BaseModel):
             diff=diff
         )
         codecs.open(self.html_path, "w", 'utf8').write(html)
+        return True
 
     def _generate_diff_images(self):
         if os.path.isfile(self.screenshot_path):
@@ -311,7 +321,8 @@ def setup_logging():
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         filename=path,
-        filemode="a"
+        filemode="a",
+        encoding="utf8"
     )
     logging.getLogger("readability.readability").setLevel(logging.WARNING)
     logging.getLogger("tweepy.binder").setLevel(logging.WARNING)
@@ -481,6 +492,7 @@ def _normal(s):
     s = s.replace("\n", " ")
     s = s.replace("­", "") 
     s = re.sub(r'  +', ' ', s)
+    s = s.strip()
     return s
 
 def _remove_utm(url):

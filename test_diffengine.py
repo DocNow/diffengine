@@ -1,5 +1,6 @@
 import os
 import re
+import setup
 import pytest
 import shutil
 
@@ -12,6 +13,9 @@ if os.path.isdir("test"):
 init("test", prompt=False)
 
 # the sequence of these tests is significant
+
+def test_version():
+    assert setup.version in UA
 
 def test_feed():
     f = Feed.create(name="Test", url="https://inkdroid.org/feed.xml")
@@ -47,6 +51,18 @@ def test_diff():
     assert os.path.isfile(diff.html_path)
     assert os.path.isfile(diff.screenshot_path)
     assert os.path.isfile(diff.thumbnail_path)
+
+def test_html_diff():
+    f = Feed.get(Feed.url=="https://inkdroid.org/feed.xml")
+    e = f.entries[0]
+
+    # add a change to the summary that htmldiff ignores
+    v1 = e.versions[-1]
+    v1.summary += "<br>"
+    v1.save()
+
+    v2 = e.get_latest()
+    assert v2 is None
 
 def test_many_to_many():
 
