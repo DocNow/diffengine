@@ -49,7 +49,8 @@ class Feed(BaseModel):
         return (Entry.select()
                 .join(FeedEntry)
                 .join(Feed)
-                .where(Feed.url==self.url))
+                .where(Feed.url==self.url)
+                .order_by(Entry.created.desc()))
 
     def get_latest(self):
         """
