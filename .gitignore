@@ -9,3 +9,5 @@ diffs/*
 test
 diffengine.egg-info
 build
+Pip*
+.venv
