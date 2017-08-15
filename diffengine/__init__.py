@@ -407,7 +407,7 @@ def setup_phantomjs():
         subprocess.check_output([phantomjs, '--version'])
     except FileNotFoundError:
         print("Please install phantomjs <http://phantomjs.org/>")
-        print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % home.rstrip("/"))
+        print("If phantomjs is installed but not in your path you can set the full path to phantomjs in your config: %s" % home.rstrip("/"))
         sys.exit()
 
 def tweet_diff(diff, token):
@@ -513,8 +513,8 @@ punctuation = dict.fromkeys(i for i in range(sys.maxunicode)
 
 def _fingerprint(s):
     # make sure the string has been normalized, bleach everything, remove all 
-    # whitespace and punctuation to create a psuedo fingerprint for the text 
-    # for use during compararison
+    # whitespace and punctuation to create a pseudo fingerprint for the text 
+    # for use during comparison
     s = _normal(s)
     s = bleach.clean(s, tags=[], strip=True)
     s = re.sub(r'\s+', '', s, flags=re.MULTILINE)
