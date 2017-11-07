@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.1.2 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.1.3 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -276,11 +276,11 @@ class Diff(BaseModel):
 
     @property
     def screenshot_path(self):
-        return self.html_path.replace(".html", ".jpg")
+        return self.html_path.replace(".html", ".png")
 
     @property
     def thumbnail_path(self):
-        return self.screenshot_path.replace('.jpg', '-thumb.jpg')
+        return self.screenshot_path.replace('.png', '-thumb.png')
 
     def generate(self):
         if self._generate_diff_html():
