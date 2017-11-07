@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.1.0 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.1.2 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -320,6 +320,7 @@ class Diff(BaseModel):
         logging.debug("creating image screenshot %s", self.screenshot_path)
         self.browser.set_window_size(1400, 1000)
         self.browser.get(self.html_path)
+        time.sleep(5) # give the page time to load
         self.browser.save_screenshot(self.screenshot_path)
         logging.debug("creating image thumbnail %s", self.thumbnail_path)
         self.browser.set_window_size(800, 400)
@@ -479,7 +480,11 @@ def main():
                 skipped += 1
                 continue
             checked += 1
-            version = entry.get_latest()
+            try:
+                version = entry.get_latest()
+            except Exception as e:
+                logging.error('unable to get latest', e)
+                continue
             if version:
                 new += 1
             if version and version.diff and 'twitter' in f:

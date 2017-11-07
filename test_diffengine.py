@@ -109,6 +109,5 @@ def test_fingerprint():
     assert _fingerprint("foo bar") == "foobar"
     assert _fingerprint("foo bar\nbaz") == "foobarbaz"
     assert _fingerprint("foo<br>bar") == "foobar"
-    assert _fingerprint("foo&nbsp;bar") == "foobar"
     assert _fingerprint("foo'bar") == "foobar"
     assert _fingerprint("foo’bar") == "foobar"
