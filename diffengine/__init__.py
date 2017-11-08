@@ -432,8 +432,8 @@ def tweet_diff(diff, token):
     twitter = tweepy.API(auth)
 
     status = diff.new.title
-    if len(status) >= 85:
-        status = status[0:85] + "…"
+    if len(status) >= 225:
+        status = status[0:225] + "…"
 
     status += " " + diff.old.archive_url +  " ➜ " + diff.new.archive_url
 
