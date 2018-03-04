@@ -44,29 +44,31 @@ just need to be able to write to it.
 The first time you run diffengine it will prompt you to enter an RSS or Atom
 feed URL to monitor and will authenticate with Twitter. 
 
-    % diffengine /home/ed/.diffengine 
+```console
+% diffengine /home/ed/.diffengine 
 
-    What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
+What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
 
-    Would you like to set up tweeting edits? [Y/n] Y
+Would you like to set up tweeting edits? [Y/n] Y
 
-    Go to https://apps.twitter.com and create an application.
+Go to https://apps.twitter.com and create an application.
 
-    What is the consumer key? <TWITTER_APP_KEY>
+What is the consumer key? <TWITTER_APP_KEY>
 
-    What is the consumer secret? <TWITTER_APP_SECRET>
+What is the consumer secret? <TWITTER_APP_SECRET>
 
-    Log in to https://twitter.com as the user you want to tweet as and hit enter.
+Log in to https://twitter.com as the user you want to tweet as and hit enter.
 
-    Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYYlCL8g
+Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYYlCL8g
 
-    What is your PIN: 8675309
+What is your PIN: 8675309
 
-    Saved your configuration in /home/ed/.diffengine/config.yaml
-    
-    Fetching initial set of entries.
+Saved your configuration in /home/ed/.diffengine/config.yaml
 
-    Done!
+Fetching initial set of entries.
+
+Done!
+```
 
 After that you just need to put diffengine in your crontab to have it run
 regularly, or you can run it manually at your own intervals if you want. Here's
@@ -129,7 +131,7 @@ Then you will configure a cron entry for each account:
 
 If there are multiple feeds for an account, you can setup the `config.yml` like so:
 
-```
+```yml
 - name: The Globe and Mail - Report on Business
   twitter:
     access_token: ACCESS_TOKEN
@@ -157,7 +159,7 @@ twitter:
 
 Here's how to get started hacking on diffengine with [pyenv]:
 
-```
+```console
 % pyenv virtualenv 3.6.0 diffengine
 % pyenv activate diffengine
 % git clone https://github.com/docnow/diffengine 
