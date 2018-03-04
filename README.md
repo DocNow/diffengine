@@ -78,6 +78,9 @@ You can examine your config file at any time and add/remove feeds as needed. It
 is the `config.yaml` file that is stored relative to the storage directory you
 chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
+Logs can be found in `diffengine.log` in the storage directory, for example
+`/home/ed/.diffengine/diffengine.log`.
+
 ## Examples
 
 Here is a list of known diffengine Twitter accounts. If you start one please
