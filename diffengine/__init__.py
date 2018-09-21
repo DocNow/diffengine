@@ -25,6 +25,7 @@ import readability
 import unicodedata
 
 from peewee import *
+from playhouse.migrate import SqliteMigrator, migrate
 from datetime import datetime, timedelta
 from selenium import webdriver
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
@@ -208,7 +209,7 @@ class FeedEntry(BaseModel):
 
 class EntryVersion(BaseModel):
     title = CharField()
-    url = CharField()
+    url = CharField(index=True)
     summary = CharField()
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
@@ -401,6 +402,11 @@ def setup_db():
     db.init(db_file)
     db.connect()
     db.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
+    try:
+        migrator = SqliteMigrator(db)
+        migrate(migrator.add_index('entryversion', ('url',), False),)
+    except OperationalError as e:
+        logging.debug(e)
 
 def setup_phantomjs():
     phantomjs = config.get("phantomjs", "phantomjs")
