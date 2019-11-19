@@ -30,7 +30,7 @@ that can be used for research purposes.
 
 ## Install 
 
-1. install [PhantomJS]
+1. install [GeckoDriver]
 1. install [Python 3]
 1. `pip3 install --process-dependency-links diffengine`
 
@@ -150,7 +150,6 @@ If there are multiple feeds for an account, you can setup the `config.yml` like 
     access_token: ACCESS_TOKEN
     access_token_secret: ACCESS_TOKEN_SECRET
   url: http://www.theglobeandmail.com/news/?service=rss
-phantomjs: phantomjs
 twitter:
   consumer_key: CONSUMER_KEY
   consumer_secret: CONSUMER_SECRET
@@ -184,7 +183,7 @@ test_diffengine.py .....
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
-[PhantomJS]: http://phantomjs.org
+[GeckoDriver]: https://github.com/mozilla/geckodriver
 [Python 3]: https://python.org
 [create an issue]: https://github.com/DocNow/diffengine/issues
 [pyenv]: https://github.com/yyuu/pyenv

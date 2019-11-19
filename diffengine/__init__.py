@@ -14,6 +14,7 @@ import yaml
 import bleach
 import codecs
 import jinja2
+import shutil
 import tweepy
 import logging
 import htmldiff
@@ -29,10 +30,12 @@ from playhouse.migrate import SqliteMigrator, migrate
 from datetime import datetime, timedelta
 from selenium import webdriver
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 home = None
 config = {}
 db = SqliteDatabase(None)
+browser = None
 
 
 class BaseModel(Model):
@@ -276,11 +279,11 @@ class Diff(BaseModel):
 
     @property
     def screenshot_path(self):
-        return self.html_path.replace(".html", ".jpg")
+        return self.html_path.replace(".html", ".png")
 
     @property
     def thumbnail_path(self):
-        return self.screenshot_path.replace('.jpg', '-thumb.jpg')
+        return self.screenshot_path.replace('.png', '-thumb.png')
 
     def generate(self):
         if self._generate_diff_html():
@@ -314,18 +317,17 @@ class Diff(BaseModel):
     def _generate_diff_images(self):
         if os.path.isfile(self.screenshot_path):
             return
-        if not hasattr(self, 'browser'):
-            phantomjs = config.get('phantomjs', 'phantomjs')
-            self.browser = webdriver.PhantomJS(phantomjs)
+
         logging.debug("creating image screenshot %s", self.screenshot_path)
-        self.browser.set_window_size(1400, 1000)
-        self.browser.get(self.html_path)
+        browser.set_window_size(1400, 1000)
+        uri = 'file:///' + os.path.abspath(self.html_path)
+        browser.get(uri)
         time.sleep(5) # give the page time to load
-        self.browser.save_screenshot(self.screenshot_path)
+        browser.save_screenshot(self.screenshot_path)
         logging.debug("creating image thumbnail %s", self.thumbnail_path)
-        self.browser.set_window_size(800, 400)
-        self.browser.execute_script("clip()")
-        self.browser.save_screenshot(self.thumbnail_path)
+        browser.set_window_size(800, 400)
+        browser.execute_script("clip()")
+        browser.save_screenshot(self.thumbnail_path)
 
 
 def setup_logging():
@@ -343,7 +345,7 @@ def load_config(prompt=True):
     global config
     config_file = os.path.join(home, "config.yaml")
     if os.path.isfile(config_file):
-        config = yaml.load(open(config_file))
+        config = yaml.load(open(config_file), Loader=yaml.FullLoader)
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
@@ -352,7 +354,7 @@ def load_config(prompt=True):
         yaml.dump(config, open(config_file, "w"), default_flow_style=False)
 
 def get_initial_config():
-    config = {"feeds": [], "phantomjs": "phantomjs"}
+    config = {"feeds": []}
 
     while len(config['feeds']) == 0:
         url = input("What RSS/Atom feed would you like to monitor? ")
@@ -407,14 +409,17 @@ def setup_db():
     except OperationalError as e:
         logging.debug(e)
 
-def setup_phantomjs():
-    phantomjs = config.get("phantomjs", "phantomjs")
-    try:
-        subprocess.check_output([phantomjs, '--version'])
-    except FileNotFoundError:
-        print("Please install phantomjs <http://phantomjs.org/>")
-        print("If phantomjs is installed but not in your path you can set the full path to phantomjs in your config: %s" % home.rstrip("/"))
-        sys.exit()
+
+def setup_browser():
+    global browser
+
+    if not shutil.which('geckodriver'):
+        sys.exit("Please install geckodriver and make sure it is in your PATH.")
+
+    opts = FirefoxOptions()
+    opts.headless = True
+    browser = webdriver.Firefox(options=opts)
+
 
 def tweet_diff(diff, token):
     if 'twitter' not in config:
@@ -455,7 +460,7 @@ def init(new_home, prompt=True):
     global home
     home = new_home
     load_config(prompt)
-    setup_phantomjs()
+    setup_browser()
     setup_logging()
     setup_db()
 
@@ -472,7 +477,7 @@ def main():
     checked = skipped = new = 0
 
     for f in config.get('feeds', []):
-        feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
+        feed, created = Feed.get_or_create(url=f['url'], name=f['name'])
         if created:
             logging.debug("created new feed for %s", f['url'])
 
