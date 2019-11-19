@@ -1,5 +1,5 @@
 <div style="text: center;">
-<img height="200" src="https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true">
+<img height="100" src="https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true">
 </div>
 
 diffengine is a utility for watching RSS feeds to see when story content
