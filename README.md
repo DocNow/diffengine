@@ -162,11 +162,9 @@ twitter:
 Here's how to get started hacking on diffengine with [pyenv]:
 
 ```console
-% pyenv virtualenv 3.6.0 diffengine
-% pyenv activate diffengine
 % git clone https://github.com/docnow/diffengine 
 % cd diffengine
-% pip install -r requirements
+% pipenv install
 % pytest
 ============================= test session starts ==============================
 platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
