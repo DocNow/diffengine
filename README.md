@@ -159,7 +159,7 @@ twitter:
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
-Here's how to get started hacking on diffengine with [pyenv]:
+Here's how to get started hacking on diffengine with [pipenv]:
 
 ```console
 % git clone https://github.com/docnow/diffengine 
@@ -184,7 +184,7 @@ test_diffengine.py .....
 [GeckoDriver]: https://github.com/mozilla/geckodriver
 [Python 3]: https://python.org
 [create an issue]: https://github.com/DocNow/diffengine/issues
-[pyenv]: https://github.com/yyuu/pyenv
+[pipenv]: https://pipenv.readthedocs.io/en/latest/
 [Ryan Baumann's "diffengine" Twitter list]: https://twitter.com/ryanfb/lists/diffengine
 
 [wapo_diff]: https://twitter.com/wapo_diff

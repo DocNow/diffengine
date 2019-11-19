@@ -4,7 +4,7 @@ language: python
 cache: pip
 script: py.test
 before_install:
-  - sudo apt-get firefox-geckodriver
+  - sudo apt-get install firefox-geckodriver
 after_failure: cat test/diffengine.log
 notifications:
   slack:
