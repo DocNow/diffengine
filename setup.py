@@ -1,3 +1,5 @@
+version = "0.2.2"
+
 import sys
 if sys.version_info < (3,0):
     sys.exit('Sorry, diffengine runs on Python 3')
@@ -14,7 +16,6 @@ htmldiff = "https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2"
 reqs.remove(htmldiff)
 reqs.append("htmldiff==0.2")
 deps = [htmldiff]
-version = "0.2.0"
 
 if __name__ == "__main__":
     setup(
