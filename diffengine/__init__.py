@@ -250,7 +250,7 @@ class EntryVersion(BaseModel):
             resp = _get(save_url)
             wayback_id = resp.headers.get("Content-Location")
             if wayback_id:
-                self.archive_url = "https://wayback.archive.org" + wayback_id
+                self.archive_url = "https://web.archive.org" + wayback_id
                 logging.debug("archived version at %s", self.archive_url)
                 self.save()
                 return self.archive_url
