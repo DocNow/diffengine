@@ -215,7 +215,7 @@ class EntryVersion(BaseModel):
     summary = CharField()
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
-    entry = ForeignKeyField(Entry, related_name='versions')
+    entry = ForeignKeyField(Entry, backref='versions')
 
     @property
     def diff(self):
@@ -263,8 +263,8 @@ class EntryVersion(BaseModel):
         return None
 
 class Diff(BaseModel):
-    old = ForeignKeyField(EntryVersion, related_name="prev_diffs")
-    new = ForeignKeyField(EntryVersion, related_name="next_diffs")
+    old = ForeignKeyField(EntryVersion, backref="prev_diffs")
+    new = ForeignKeyField(EntryVersion, backref="next_diffs")
     created = DateTimeField(default=datetime.utcnow)
     tweeted = DateTimeField(null=True)
     blogged = DateTimeField(null=True)
