@@ -1,7 +1,7 @@
 bleach
 genshi
 jinja2
-peewee
+peewee>=3.0
 pillow
 pytest
 pyyaml>=5.1
