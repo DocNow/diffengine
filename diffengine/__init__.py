@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.2.2 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.2.3 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -503,6 +503,8 @@ def main():
     elapsed = datetime.utcnow() - start_time
     logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s", 
         new, checked, skipped, elapsed)
+
+    browser.quit()
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
