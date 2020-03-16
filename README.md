@@ -85,31 +85,8 @@ Logs can be found in `diffengine.log` in the storage directory, for example
 
 ## Examples
 
-Here is a list of known diffengine Twitter accounts. If you start one please
-send us a pull request or [create an issue] so it can be added here. For
-convenience [Ryan Baumann's "diffengine" Twitter list] aggregates many of these
-accounts.
-
-* ~[ap_diff]~: edits to the [AP]
-* ~[bbc_diff]~: edits to the [BBC]
-* [breitbart_diff]: edits to [Breitbart News]
-* [canadaland_diff]: edits to [Canadaland]
-* [cbc_diff]: edits to [The Canadian Broadcasting Corporation]
-* ~[cnn_diff]~: edits to [CNN]
-* ~[dailymail_diff]~: edits to the [Daily Mail]
-* ~[fox_diff]~: edits to [Fox News]
-* [globemail_diff]: edits to the [The Globe and Mail]
-* [guardian_diff]: edits to [The Guardian]
-* [lapresse_diff]: edits to [La Presse]
-* ~[repubblica_diff]~: edits to [La Repubblica]
-* ~[reuters_diff]~: edits to [Reuters]
-* ~[rt_edits]~: edits to [RT]
-* ~[telegraph_diff]~: edits to the [Telegraph]
-* [torstar_diff]: edits to [The Toronto Star]
-* [wapo_diff]: edits to [The Washington Post]
-* [whitehouse_diff]: edits to the [White House Blog]
-* [wsj_diff]: edits to the [Wall Street Journal]
-* [yyc_herald_diff]: edits to the [Calgary Herald]
+Checkout [Ryan Baumann's "diffengine" Twitter list] for a list of known
+diffengine Twitter accounts that are out there.
 
 ## Multiple Accounts & Feed Implementation Example
 
@@ -186,63 +163,3 @@ test_diffengine.py .....
 [create an issue]: https://github.com/DocNow/diffengine/issues
 [pipenv]: https://pipenv.readthedocs.io/en/latest/
 [Ryan Baumann's "diffengine" Twitter list]: https://twitter.com/ryanfb/lists/diffengine
-
-[wapo_diff]: https://twitter.com/wapo_diff
-[The Washington Post]: https://www.washingtonpost.com
-
-[breitbart_diff]: https://twitter.com/breitbart_diff
-[Breitbart News]: https://www.breitbart.com
-
-[guardian_diff]: https://twitter.com/guardian_diff
-[The Guardian]: https://www.theguardian.com/
-
-[torstar_diff]: https://twitter.com/torstar_diff
-[The Toronto Star]: https://www.thestar.com/
-
-[globemail_diff]: https://twitter.com/globemail_diff
-[The Globe and Mail]: http://www.theglobeandmail.com/
-
-[canadaland_diff]: https://twitter.com/canadaland_diff
-[Canadaland]: http://www.canadalandshow.com/
-
-[repubblica_diff]: https://twitter.com/repubblica_diff
-[La Repubblica]: http://www.repubblica.it/
-
-[yyc_herald_diff]: https://twitter.com/yyc_herald_diff
-[Calgary Herald]: http://calgaryherald.com/
-
-[cbc_diff]: https://twitter.com/cbc_diff
-[The Canadian Broadcasting Corporation]: http://www.cbc.ca/
-
-[lapresse_diff]: https://twitter.com/lapresse_diff
-[La Presse]: http://www.lapresse.ca/
-
-[bbc_diff]: https://twitter.com/bbc_diff
-[BBC]: http://www.bbc.co.uk/
-
-[rt_edits]: https://twitter.com/rt_edits
-[RT]: http://rt.com
-
-[fox_diff]: https://twitter.com/fox_diff
-[Fox News]: http://www.foxnews.com/
-
-[dailymail_diff]: https://twitter.com/dailymail_diff
-[Daily Mail]: http://www.dailymail.co.uk/
-
-[telegraph_diff]: https://twitter.com/telegraph_diff
-[Telegraph]: http://www.telegraph.co.uk/
-
-[cnn_diff]: https://twitter.com/cnn_diff
-[CNN]: http://www.cnn.com/
-
-[reuters_diff]: https://twitter.com/reuters_diff
-[Reuters]: http://www.reuters.com/
-
-[ap_diff]: https://twitter.com/ap_diff
-[AP]: https://www.ap.org/
-
-[whitehouse_diff]: https://twitter.com/whitehouse_diff
-[White House Blog]: https://www.whitehouse.gov/blog
-
-[wsj_diff]: https://twitter.com/wsj_diff
-[Wall Street Journal]: http://www.wsj.com/
