@@ -1,10 +1,10 @@
 bleach
 genshi
 jinja2
-peewee==2.8.8
+peewee>=3.0
 pillow
 pytest
-pyyaml
+pyyaml>=5.1
 tweepy
 requests
 selenium

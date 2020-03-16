@@ -1,5 +1,5 @@
 <div style="text: center;">
-<img height="200" src="https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true">
+<img height="100" src="https://github.com/DocNow/diffengine/blob/master/diffengine.png?raw=true">
 </div>
 
 diffengine is a utility for watching RSS feeds to see when story content
@@ -30,7 +30,7 @@ that can be used for research purposes.
 
 ## Install 
 
-1. install [PhantomJS]
+1. install [GeckoDriver]
 1. install [Python 3]
 1. `pip3 install --process-dependency-links diffengine`
 
@@ -44,29 +44,31 @@ just need to be able to write to it.
 The first time you run diffengine it will prompt you to enter an RSS or Atom
 feed URL to monitor and will authenticate with Twitter. 
 
-    % diffengine /home/ed/.diffengine 
+```console
+% diffengine /home/ed/.diffengine 
 
-    What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
+What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
 
-    Would you like to set up tweeting edits? [Y/n] Y
+Would you like to set up tweeting edits? [Y/n] Y
 
-    Go to https://apps.twitter.com and create an application.
+Go to https://apps.twitter.com and create an application.
 
-    What is the consumer key? <TWITTER_APP_KEY>
+What is the consumer key? <TWITTER_APP_KEY>
 
-    What is the consumer secret? <TWITTER_APP_SECRET>
+What is the consumer secret? <TWITTER_APP_SECRET>
 
-    Log in to https://twitter.com as the user you want to tweet as and hit enter.
+Log in to https://twitter.com as the user you want to tweet as and hit enter.
 
-    Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYYlCL8g
+Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYYlCL8g
 
-    What is your PIN: 8675309
+What is your PIN: 8675309
 
-    Saved your configuration in /home/ed/.diffengine/config.yaml
-    
-    Fetching initial set of entries.
+Saved your configuration in /home/ed/.diffengine/config.yaml
 
-    Done!
+Fetching initial set of entries.
+
+Done!
+```
 
 After that you just need to put diffengine in your crontab to have it run
 regularly, or you can run it manually at your own intervals if you want. Here's
@@ -78,6 +80,9 @@ You can examine your config file at any time and add/remove feeds as needed. It
 is the `config.yaml` file that is stored relative to the storage directory you
 chose, so in my case `/home/ed/.diffengine/config.yaml`.
 
+Logs can be found in `diffengine.log` in the storage directory, for example
+`/home/ed/.diffengine/diffengine.log`.
+
 ## Examples
 
 Here is a list of known diffengine Twitter accounts. If you start one please
@@ -85,21 +90,21 @@ send us a pull request or [create an issue] so it can be added here. For
 convenience [Ryan Baumann's "diffengine" Twitter list] aggregates many of these
 accounts.
 
-* [ap_diff]: edits to the [AP]
-* [bbc_diff]: edits to the [BBC]
+* ~[ap_diff]~: edits to the [AP]
+* ~[bbc_diff]~: edits to the [BBC]
 * [breitbart_diff]: edits to [Breitbart News]
 * [canadaland_diff]: edits to [Canadaland]
 * [cbc_diff]: edits to [The Canadian Broadcasting Corporation]
-* [cnn_diff]: edits to [CNN]
-* [dailymail_diff]: edits to the [Daily Mail]
-* [fox_diff]: edits to [Fox News]
+* ~[cnn_diff]~: edits to [CNN]
+* ~[dailymail_diff]~: edits to the [Daily Mail]
+* ~[fox_diff]~: edits to [Fox News]
 * [globemail_diff]: edits to the [The Globe and Mail]
 * [guardian_diff]: edits to [The Guardian]
 * [lapresse_diff]: edits to [La Presse]
-* [repubblica_diff]: edits to [La Repubblica]
-* [reuters_diff]: edits to [Reuters]
-* [rt_edits]: edits to [RT]
-* [telegraph_diff]: edits to the [Telegraph]
+* ~[repubblica_diff]~: edits to [La Repubblica]
+* ~[reuters_diff]~: edits to [Reuters]
+* ~[rt_edits]~: edits to [RT]
+* ~[telegraph_diff]~: edits to the [Telegraph]
 * [torstar_diff]: edits to [The Toronto Star]
 * [wapo_diff]: edits to [The Washington Post]
 * [whitehouse_diff]: edits to the [White House Blog]
@@ -129,7 +134,7 @@ Then you will configure a cron entry for each account:
 
 If there are multiple feeds for an account, you can setup the `config.yml` like so:
 
-```
+```yml
 - name: The Globe and Mail - Report on Business
   twitter:
     access_token: ACCESS_TOKEN
@@ -145,7 +150,6 @@ If there are multiple feeds for an account, you can setup the `config.yml` like 
     access_token: ACCESS_TOKEN
     access_token_secret: ACCESS_TOKEN_SECRET
   url: http://www.theglobeandmail.com/news/?service=rss
-phantomjs: phantomjs
 twitter:
   consumer_key: CONSUMER_KEY
   consumer_secret: CONSUMER_SECRET
@@ -155,14 +159,12 @@ twitter:
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
 
-Here's how to get started hacking on diffengine with [pyenv]:
+Here's how to get started hacking on diffengine with [pipenv]:
 
-```
-% pyenv virtualenv 3.6.0 diffengine
-% pyenv activate diffengine
+```console
 % git clone https://github.com/docnow/diffengine 
 % cd diffengine
-% pip install -r requirements
+% pipenv install
 % pytest
 ============================= test session starts ==============================
 platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
@@ -179,10 +181,10 @@ test_diffengine.py .....
 [NewsDiffs]: http://newsdiffs.org/
 [feedparser]: https://pythonhosted.org/feedparser/
 [readability]: https://github.com/buriy/python-readability
-[PhantomJS]: http://phantomjs.org
+[GeckoDriver]: https://github.com/mozilla/geckodriver
 [Python 3]: https://python.org
 [create an issue]: https://github.com/DocNow/diffengine/issues
-[pyenv]: https://github.com/yyuu/pyenv
+[pipenv]: https://pipenv.readthedocs.io/en/latest/
 [Ryan Baumann's "diffengine" Twitter list]: https://twitter.com/ryanfb/lists/diffengine
 
 [wapo_diff]: https://twitter.com/wapo_diff

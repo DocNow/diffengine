@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.1.3 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.2.4 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -14,6 +14,7 @@ import yaml
 import bleach
 import codecs
 import jinja2
+import shutil
 import tweepy
 import logging
 import htmldiff
@@ -25,13 +26,16 @@ import readability
 import unicodedata
 
 from peewee import *
+from playhouse.migrate import SqliteMigrator, migrate
 from datetime import datetime, timedelta
 from selenium import webdriver
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 home = None
 config = {}
 db = SqliteDatabase(None)
+browser = None
 
 
 class BaseModel(Model):
@@ -162,8 +166,7 @@ class Entry(BaseModel):
         canonical_url = _remove_utm(resp.url)
 
         # get the latest version, if we have one
-        versions = EntryVersion.select().where(EntryVersion.url==canonical_url)
-        versions = versions.order_by(-EntryVersion.created)
+        versions = EntryVersion.select().where(EntryVersion.url==canonical_url).order_by(-EntryVersion.created).limit(1)
         if len(versions) == 0:
             old = None
         else:
@@ -208,11 +211,11 @@ class FeedEntry(BaseModel):
 
 class EntryVersion(BaseModel):
     title = CharField()
-    url = CharField()
+    url = CharField(index=True)
     summary = CharField()
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
-    entry = ForeignKeyField(Entry, related_name='versions')
+    entry = ForeignKeyField(Entry, backref='versions')
 
     @property
     def diff(self):
@@ -247,7 +250,7 @@ class EntryVersion(BaseModel):
             resp = _get(save_url)
             wayback_id = resp.headers.get("Content-Location")
             if wayback_id:
-                self.archive_url = "https://wayback.archive.org" + wayback_id
+                self.archive_url = "https://web.archive.org" + wayback_id
                 logging.debug("archived version at %s", self.archive_url)
                 self.save()
                 return self.archive_url
@@ -260,8 +263,8 @@ class EntryVersion(BaseModel):
         return None
 
 class Diff(BaseModel):
-    old = ForeignKeyField(EntryVersion, related_name="prev_diffs")
-    new = ForeignKeyField(EntryVersion, related_name="next_diffs")
+    old = ForeignKeyField(EntryVersion, backref="prev_diffs")
+    new = ForeignKeyField(EntryVersion, backref="next_diffs")
     created = DateTimeField(default=datetime.utcnow)
     tweeted = DateTimeField(null=True)
     blogged = DateTimeField(null=True)
@@ -314,18 +317,17 @@ class Diff(BaseModel):
     def _generate_diff_images(self):
         if os.path.isfile(self.screenshot_path):
             return
-        if not hasattr(self, 'browser'):
-            phantomjs = config.get('phantomjs', 'phantomjs')
-            self.browser = webdriver.PhantomJS(phantomjs)
+
         logging.debug("creating image screenshot %s", self.screenshot_path)
-        self.browser.set_window_size(1400, 1000)
-        self.browser.get(self.html_path)
+        browser.set_window_size(1400, 1000)
+        uri = 'file:///' + os.path.abspath(self.html_path)
+        browser.get(uri)
         time.sleep(5) # give the page time to load
-        self.browser.save_screenshot(self.screenshot_path)
+        browser.save_screenshot(self.screenshot_path)
         logging.debug("creating image thumbnail %s", self.thumbnail_path)
-        self.browser.set_window_size(800, 400)
-        self.browser.execute_script("clip()")
-        self.browser.save_screenshot(self.thumbnail_path)
+        browser.set_window_size(800, 400)
+        browser.execute_script("clip()")
+        browser.save_screenshot(self.thumbnail_path)
 
 
 def setup_logging():
@@ -343,7 +345,7 @@ def load_config(prompt=True):
     global config
     config_file = os.path.join(home, "config.yaml")
     if os.path.isfile(config_file):
-        config = yaml.load(open(config_file))
+        config = yaml.load(open(config_file), Loader=yaml.FullLoader)
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
@@ -352,7 +354,7 @@ def load_config(prompt=True):
         yaml.dump(config, open(config_file, "w"), default_flow_style=False)
 
 def get_initial_config():
-    config = {"feeds": [], "phantomjs": "phantomjs"}
+    config = {"feeds": []}
 
     while len(config['feeds']) == 0:
         url = input("What RSS/Atom feed would you like to monitor? ")
@@ -401,15 +403,23 @@ def setup_db():
     db.init(db_file)
     db.connect()
     db.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
-
-def setup_phantomjs():
-    phantomjs = config.get("phantomjs", "phantomjs")
     try:
-        subprocess.check_output([phantomjs, '--version'])
-    except FileNotFoundError:
-        print("Please install phantomjs <http://phantomjs.org/>")
-        print("If phantomjs is intalled but not in your path you can set the full path to phantomjs in your config: %s" % home.rstrip("/"))
-        sys.exit()
+        migrator = SqliteMigrator(db)
+        migrate(migrator.add_index('entryversion', ('url',), False),)
+    except OperationalError as e:
+        logging.debug(e)
+
+
+def setup_browser():
+    global browser
+
+    if not shutil.which('geckodriver'):
+        sys.exit("Please install geckodriver and make sure it is in your PATH.")
+
+    opts = FirefoxOptions()
+    opts.headless = True
+    browser = webdriver.Firefox(options=opts)
+
 
 def tweet_diff(diff, token):
     if 'twitter' not in config:
@@ -432,8 +442,8 @@ def tweet_diff(diff, token):
     twitter = tweepy.API(auth)
 
     status = diff.new.title
-    if len(status) >= 85:
-        status = status[0:85] + "…"
+    if len(status) >= 225:
+        status = status[0:225] + "…"
 
     status += " " + diff.old.archive_url +  " ➜ " + diff.new.archive_url
 
@@ -450,7 +460,7 @@ def init(new_home, prompt=True):
     global home
     home = new_home
     load_config(prompt)
-    setup_phantomjs()
+    setup_browser()
     setup_logging()
     setup_db()
 
@@ -467,7 +477,7 @@ def main():
     checked = skipped = new = 0
 
     for f in config.get('feeds', []):
-        feed, created = Feed.create_or_get(url=f['url'], name=f['name'])
+        feed, created = Feed.get_or_create(url=f['url'], name=f['name'])
         if created:
             logging.debug("created new feed for %s", f['url'])
 
@@ -494,6 +504,8 @@ def main():
     logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s", 
         new, checked, skipped, elapsed)
 
+    browser.quit()
+
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -518,8 +530,8 @@ punctuation = dict.fromkeys(i for i in range(sys.maxunicode)
 
 def _fingerprint(s):
     # make sure the string has been normalized, bleach everything, remove all 
-    # whitespace and punctuation to create a psuedo fingerprint for the text 
-    # for use during compararison
+    # whitespace and punctuation to create a pseudo fingerprint for the text 
+    # for use during comparison
     s = _normal(s)
     s = bleach.clean(s, tags=[], strip=True)
     s = re.sub(r'\s+', '', s, flags=re.MULTILINE)

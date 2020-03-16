@@ -1,9 +1,10 @@
 python:
-  - 3.5
-  - 3.6
+  - 3.7
 language: python
 cache: pip
 script: py.test
+before_install:
+  - sudo apt-get install firefox-geckodriver
 after_failure: cat test/diffengine.log
 notifications:
   slack:
