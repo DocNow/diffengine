@@ -42,6 +42,7 @@ def test_diff():
     v2 = e.get_latest()
     assert type(v2) == EntryVersion
     assert v2.diff
+    assert v2.archive_url is not None
     assert re.match("^https://web.archive.org/web/[0-9]+/.+$",
                     v2.archive_url) is not None
 

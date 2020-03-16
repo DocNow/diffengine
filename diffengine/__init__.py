@@ -247,16 +247,16 @@ class EntryVersion(BaseModel):
     def archive(self):
         save_url = "https://web.archive.org/save/" + self.url
         try:
-            resp = _get(save_url)
-            wayback_id = resp.headers.get("Content-Location")
-            if wayback_id:
-                self.archive_url = "https://web.archive.org" + wayback_id
+            resp = _get(save_url, allow_redirects=False)
+            archive_url = resp.headers.get("Location")
+            if archive_url:
+                self.archive_url = archive_url
                 logging.debug("archived version at %s", self.archive_url)
                 self.save()
                 return self.archive_url
             else:
-                logging.error("unable to get archive id from %s: %s",
-                        self.archive_url, resp.headers)
+                logging.error("unable to get archive url from %s: %s", 
+                    self.save_url, resp.headers)
 
         except Exception as e:
             logging.error("unexpected archive.org response for %s: %s", save_url, e)
@@ -551,8 +551,14 @@ def _remove_utm(url):
         u.fragment
     ])
 
-def _get(url):
-    return requests.get(url, timeout=60, headers={"User-Agent": UA})
+def _get(url, allow_redirects=True):
+    return requests.get(
+        url, 
+        timeout=60,
+        headers={"User-Agent": UA},
+        allow_redirects=allow_redirects
+    )
+
 
 if __name__ == "__main__":
     main()
