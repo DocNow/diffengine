@@ -1,4 +1,4 @@
-version = "0.2.5"
+version = "0.2.6"
 
 import sys
 if sys.version_info < (3,0):

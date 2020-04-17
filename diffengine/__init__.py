@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.2.5 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.2.6 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -247,16 +247,16 @@ class EntryVersion(BaseModel):
     def archive(self):
         save_url = "https://web.archive.org/save/" + self.url
         try:
-            resp = _get(save_url, allow_redirects=False)
-            archive_url = resp.headers.get("Location")
+            resp = _get(save_url)
+            archive_url = resp.headers.get("Content-Location")
             if archive_url:
-                self.archive_url = archive_url
+                self.archive_url = "https://web.archive.org" + archive_url
                 logging.debug("archived version at %s", self.archive_url)
                 self.save()
                 return self.archive_url
             else:
-                logging.error("unable to get archive url from %s: %s", 
-                    self.save_url, resp.headers)
+                logging.error("unable to get archive url from %s [%s]: %s", 
+                    save_url, resp.status_code, resp.headers)
 
         except Exception as e:
             logging.error("unexpected archive.org response for %s: %s", save_url, e)
