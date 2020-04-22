@@ -3,7 +3,7 @@
 
 # maybe this module should be broken up into multiple files, or maybe not ...
 
-UA = "diffengine/0.2.6 (+https://github.com/docnow/diffengine)"
+UA = "diffengine/0.2.7 (+https://github.com/docnow/diffengine)"
 
 import os
 import re
@@ -285,6 +285,19 @@ class Diff(BaseModel):
     def thumbnail_path(self):
         return self.screenshot_path.replace('.png', '-thumb.png')
 
+    @property
+    def url(self):
+
+        def snap(url):
+            m = re.match(r'^https://web.archive.org/web/(\d+?)/.*$', url)
+            return m.group(1) if m else None
+
+        return 'https://web.archive.org/web/diff/{}/{}/{}/'.format(
+            snap(self.old.archive_url),
+            snap(self.new.archive_url),
+            self.old.url
+        )
+
     def generate(self):
         if self._generate_diff_html():
             self._generate_diff_images()
@@ -445,7 +458,7 @@ def tweet_diff(diff, token):
     if len(status) >= 225:
         status = status[0:225] + "…"
 
-    status += " " + diff.old.archive_url +  " ➜ " + diff.new.archive_url
+    status += " " + diff.url
 
     try:
         twitter.update_with_media(diff.thumbnail_path, status)

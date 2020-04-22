@@ -53,6 +53,10 @@ def test_diff():
     assert os.path.isfile(diff.screenshot_path)
     assert os.path.isfile(diff.thumbnail_path)
 
+    # check that the url for the internet archive diff is working
+    assert re.match("^https://web.archive.org/web/diff/\d+/\d+/https.+$",
+                    diff.url)
+
 def test_html_diff():
     f = Feed.get(Feed.url=="https://inkdroid.org/feed.xml")
     e = f.entries[0]
