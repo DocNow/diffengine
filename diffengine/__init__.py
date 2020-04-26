@@ -383,7 +383,7 @@ def get_auth_link_and_show_token():
     token = request_pin_to_user_and_get_token(
         twitter["consumer_key"], twitter["consumer_secret"]
     )
-    print("These are your access token and secret.\nDO NOT SHARE THEM WITH ANYONE!\n")
+    print("\nThese are your access token and secret.\nDO NOT SHARE THEM WITH ANYONE!\n")
     print("ACCESS_TOKEN\n%s\n" % token[0])
     print("ACCESS_TOKEN_SECRET\n%s\n" % token[1])
 
