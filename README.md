@@ -174,6 +174,17 @@ test_diffengine.py .....
 =========================== 5 passed in 8.09 seconds ===========================
 ```
 
+Last, you need to install the pre-commit hooks to be run before any commit
+
+```
+pre-commit install
+```
+
+This way, [Black](https://black.readthedocs.io/en/stable/) formatter will be executed every time.
+
+We recommend you to [to configure it in your own IDE here.](https://black.readthedocs.io/en/stable/editor_integration.html)
+
+
 [nyt_diff]: https://twitter.com/nyt_diff
 [NYTDiff]: https://github.com/j-e-d/NYTdiff
 [NewsDiffs]: http://newsdiffs.org/
