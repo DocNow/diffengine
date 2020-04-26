@@ -7,8 +7,10 @@ language: python
 cache: pip
 script: py.test
 before_install:
-  - sudo apt-get install firefox-geckodriver
-  - sudo apt-get install chromium-chromedriver
+  - sudo apt-get update -y
+  - sudo apt-get upgrade -y
+  - sudo apt-get install -y firefox-geckodriver
+  - sudo apt-get install -y chromium-chromedriver
 after_failure: cat test/diffengine.log
 notifications:
   slack:
