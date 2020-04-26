@@ -25,6 +25,7 @@ import subprocess
 import readability
 import unicodedata
 import yaml
+import argparse
 
 from peewee import *
 from playhouse.migrate import SqliteMigrator, migrate
@@ -385,20 +386,14 @@ def get_initial_config():
         else:
             config["feeds"].append({"url": url, "name": feed.feed.title})
 
-    answer = input("Would you like to set up tweeting edits? [Y/n] ")
+    answer = input("Would you like to set up tweeting edits? [Y/n] ") or "Y"
     if answer.lower() == "y":
         print("Go to https://apps.twitter.com and create an application.")
         consumer_key = input("What is the consumer key? ")
         consumer_secret = input("What is the consumer secret? ")
-        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        auth.secure = True
-        auth_url = auth.get_authorization_url()
-        input(
-            "Log in to https://twitter.com as the user you want to tweet as and hit enter."
-        )
-        input("Visit %s in your browser and hit enter." % auth_url)
-        pin = input("What is your PIN: ")
-        token = auth.get_access_token(verifier=pin)
+
+        token = request_pin_to_user_and_get_token(consumer_key, consumer_secret)
+
         config["twitter"] = {
             "consumer_key": consumer_key,
             "consumer_secret": consumer_secret,
@@ -412,6 +407,18 @@ def get_initial_config():
     print("Fetching initial set of entries.")
 
     return config
+
+
+def request_pin_to_user_and_get_token(consumer_key, consumer_secret):
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.secure = True
+    auth_url = auth.get_authorization_url()
+    input(
+        "Log in to https://twitter.com as the user you want to tweet as and hit enter."
+    )
+    input("Visit %s in your browser and hit enter." % auth_url)
+    pin = input("What is your PIN: ")
+    return auth.get_access_token(verifier=pin)
 
 
 def home_path(rel_path):
@@ -587,5 +594,27 @@ def _get(url, allow_redirects=True):
     )
 
 
+def get_auth_link_and_show_token():
+    global home
+    home = os.getcwd()
+    config = load_config(True)
+    twitter = config["twitter"]
+    token = request_pin_to_user_and_get_token(
+        twitter["consumer_key"], twitter["consumer_secret"]
+    )
+    print("These are your access token and secret.\nDO NOT SHARE THEM WITH ANYONE!\n")
+    print("ACCESS_TOKEN\n%s\n" % token[0])
+    print("ACCESS_TOKEN_SECRET\n%s\n" % token[1])
+
+
+# Cli options
+parser = argparse.ArgumentParser()
+parser.add_argument("--add", action="store_true")
+
 if __name__ == "__main__":
-    main()
+    options = parser.parse_args()
+    if options.add:
+        get_auth_link_and_show_token()
+    else:
+        main()
+    sys.exit("Finishing diffengine")
