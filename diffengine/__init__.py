@@ -24,6 +24,7 @@ import feedparser
 import subprocess
 import readability
 import unicodedata
+import yaml
 
 from peewee import *
 from playhouse.migrate import SqliteMigrator, migrate
@@ -31,6 +32,7 @@ from datetime import datetime, timedelta
 from selenium import webdriver
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from envyaml import EnvYAML
 
 home = None
 config = {}
@@ -47,7 +49,7 @@ class Feed(BaseModel):
     url = CharField(primary_key=True)
     name = CharField()
     created = DateTimeField(default=datetime.utcnow)
-    
+
     @property
     def entries(self):
         return (Entry.select()
@@ -70,7 +72,7 @@ class Feed(BaseModel):
             return 0
         count = 0
         for e in feed.entries:
-            # note: look up with url only, because there may be 
+            # note: look up with url only, because there may be
             # overlap bewteen feeds, especially when a large newspaper
             # has multiple feeds
             entry, created = Entry.get_or_create(url=e.link)
@@ -78,7 +80,7 @@ class Feed(BaseModel):
                 FeedEntry.create(entry=entry, feed=self)
                 logging.info("found new entry: %s", e.link)
                 count += 1
-            elif len(entry.feeds.where(Feed.url == self.url)) == 0: 
+            elif len(entry.feeds.where(Feed.url == self.url)) == 0:
                 FeedEntry.create(entry=entry, feed=self)
                 logging.debug("found entry from another feed: %s", e.link)
                 count += 1
@@ -98,10 +100,10 @@ class Entry(BaseModel):
                 .join(Entry)
                 .where(Entry.id==self.id))
 
-    @property   
+    @property
     def stale(self):
         """
-        A heuristic for checking new content very often, and checking 
+        A heuristic for checking new content very often, and checking
         older content less frequently. If an entry is deemed stale then
         it is worth checking again to see if the content has changed.
         """
@@ -131,10 +133,10 @@ class Entry(BaseModel):
 
     def get_latest(self):
         """
-        get_latest is the heart of the application. It will get the current 
-        version on the web, extract its summary with readability and compare 
-        it against a previous version. If a difference is found it will 
-        compute the diff, save it as html and png files, and tell Internet 
+        get_latest is the heart of the application. It will get the current
+        version on the web, extract its summary with readability and compare
+        it against a previous version. If a difference is found it will
+        compute the diff, save it as html and png files, and tell Internet
         Archive to create a snapshot.
 
         If a new version was found it will be returned, otherwise None will
@@ -172,7 +174,7 @@ class Entry(BaseModel):
         else:
             old = versions[0]
 
-        # compare what we got against the latest version and create a 
+        # compare what we got against the latest version and create a
         # new version if it looks different, or is brand new (no old version)
         new = None
 
@@ -255,7 +257,7 @@ class EntryVersion(BaseModel):
                 self.save()
                 return self.archive_url
             else:
-                logging.error("unable to get archive url from %s [%s]: %s", 
+                logging.error("unable to get archive url from %s [%s]: %s",
                     save_url, resp.status_code, resp.headers)
 
         except Exception as e:
@@ -358,7 +360,7 @@ def load_config(prompt=True):
     global config
     config_file = os.path.join(home, "config.yaml")
     if os.path.isfile(config_file):
-        config = yaml.load(open(config_file), Loader=yaml.FullLoader)
+        config = EnvYAML(config_file)
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
@@ -472,6 +474,8 @@ def tweet_diff(diff, token):
 def init(new_home, prompt=True):
     global home
     home = new_home
+    env_path = "%s/.env" % new_home
+    load_dotenv(dotenv_path=env_path)
     load_config(prompt)
     setup_browser()
     setup_logging()
@@ -486,7 +490,7 @@ def main():
     init(home)
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
-    
+
     checked = skipped = new = 0
 
     for f in config.get('feeds', []):
@@ -496,7 +500,7 @@ def main():
 
         # get latest feed entries
         feed.get_latest()
-        
+
         # get latest content for each entry
         for entry in feed.entries:
             if not entry.stale:
@@ -514,7 +518,7 @@ def main():
                 tweet_diff(version.diff, f['twitter'])
 
     elapsed = datetime.utcnow() - start_time
-    logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s", 
+    logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s",
         new, checked, skipped, elapsed)
 
     browser.quit()
@@ -530,7 +534,7 @@ def _normal(s):
     s = s.replace('”', '"')
     s = s.replace("’", "'")
     s = s.replace("\n", " ")
-    s = s.replace("­", "") 
+    s = s.replace("­", "")
     s = re.sub(r'  +', ' ', s)
     s = s.strip()
     return s
@@ -538,12 +542,12 @@ def _normal(s):
 def _equal(s1, s2):
     return _fingerprint(s1) == _fingerprint(s2)
 
-punctuation = dict.fromkeys(i for i in range(sys.maxunicode) 
+punctuation = dict.fromkeys(i for i in range(sys.maxunicode)
         if unicodedata.category(chr(i)).startswith('P'))
 
 def _fingerprint(s):
-    # make sure the string has been normalized, bleach everything, remove all 
-    # whitespace and punctuation to create a pseudo fingerprint for the text 
+    # make sure the string has been normalized, bleach everything, remove all
+    # whitespace and punctuation to create a pseudo fingerprint for the text
     # for use during comparison
     s = _normal(s)
     s = bleach.clean(s, tags=[], strip=True)
@@ -566,7 +570,7 @@ def _remove_utm(url):
 
 def _get(url, allow_redirects=True):
     return requests.get(
-        url, 
+        url,
         timeout=60,
         headers={"User-Agent": UA},
         allow_redirects=allow_redirects
