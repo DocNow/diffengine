@@ -135,9 +135,6 @@ def test_fingerprint():
     assert _fingerprint("foo’bar") == "foobar"
 
 
-# @pytest.mark.skipif(
-#    os.environ.get("TRAVIS") is not None, reason="this .env test fails on Travis"
-# )
 def test_environment_vars_in_config_file():
 
     # test values
