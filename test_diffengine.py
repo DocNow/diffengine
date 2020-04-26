@@ -159,3 +159,27 @@ def test_environment_vars_in_config_file():
     assert new_config["example"]["public_value"] == public_value
     assert new_config["example"]["private_value"] != private_yaml_key
     assert new_config["example"]["private_value"] == private_value
+
+
+def test_geckodriver_when_webdriver_is_not_defined():
+    # create config.yaml that will be read
+    browser = setup_browser()
+    assert isinstance(browser, webdriver.Firefox) == True
+
+
+def test_raises_when_unknown_webdriver():
+    with pytest.raises(UnknownWebdriverError):
+        # create config.yaml that will be read
+        setup_browser("wrong_engine")
+
+
+def test_webdriver_is_geckodriver():
+    # create config.yaml that will be read
+    browser = setup_browser("geckodriver")
+    assert isinstance(browser, webdriver.Firefox) == True
+
+
+def test_webdriver_is_chromedriver():
+    # create config.yaml that will be read
+    browser = setup_browser("chromedriver")
+    assert isinstance(browser, webdriver.Chrome) == True
