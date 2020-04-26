@@ -375,6 +375,19 @@ def load_config(prompt=True):
     return config
 
 
+def get_auth_link_and_show_token():
+    global home
+    home = os.getcwd()
+    config = load_config(True)
+    twitter = config["twitter"]
+    token = request_pin_to_user_and_get_token(
+        twitter["consumer_key"], twitter["consumer_secret"]
+    )
+    print("These are your access token and secret.\nDO NOT SHARE THEM WITH ANYONE!\n")
+    print("ACCESS_TOKEN\n%s\n" % token[0])
+    print("ACCESS_TOKEN_SECRET\n%s\n" % token[1])
+
+
 def get_initial_config():
     config = {"feeds": []}
 
@@ -594,25 +607,12 @@ def _get(url, allow_redirects=True):
     )
 
 
-def get_auth_link_and_show_token():
-    global home
-    home = os.getcwd()
-    config = load_config(True)
-    twitter = config["twitter"]
-    token = request_pin_to_user_and_get_token(
-        twitter["consumer_key"], twitter["consumer_secret"]
-    )
-    print("These are your access token and secret.\nDO NOT SHARE THEM WITH ANYONE!\n")
-    print("ACCESS_TOKEN\n%s\n" % token[0])
-    print("ACCESS_TOKEN_SECRET\n%s\n" % token[1])
-
-
 # Cli options
 parser = argparse.ArgumentParser()
 parser.add_argument("--add", action="store_true")
+options = parser.parse_args()
 
 if __name__ == "__main__":
-    options = parser.parse_args()
     if options.add:
         get_auth_link_and_show_token()
     else:
