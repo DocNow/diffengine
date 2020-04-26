@@ -52,11 +52,13 @@ class Feed(BaseModel):
 
     @property
     def entries(self):
-        return (Entry.select()
-                .join(FeedEntry)
-                .join(Feed)
-                .where(Feed.url==self.url)
-                .order_by(Entry.created.desc()))
+        return (
+            Entry.select()
+            .join(FeedEntry)
+            .join(Feed)
+            .where(Feed.url == self.url)
+            .order_by(Entry.created.desc())
+        )
 
     def get_latest(self):
         """
@@ -95,10 +97,7 @@ class Entry(BaseModel):
 
     @property
     def feeds(self):
-        return (Feed.select()
-                .join(FeedEntry)
-                .join(Entry)
-                .where(Entry.id==self.id))
+        return Feed.select().join(FeedEntry).join(Entry).where(Entry.id == self.id)
 
     @property
     def stale(self):
@@ -168,7 +167,12 @@ class Entry(BaseModel):
         canonical_url = _remove_utm(resp.url)
 
         # get the latest version, if we have one
-        versions = EntryVersion.select().where(EntryVersion.url==canonical_url).order_by(-EntryVersion.created).limit(1)
+        versions = (
+            EntryVersion.select()
+            .where(EntryVersion.url == canonical_url)
+            .order_by(-EntryVersion.created)
+            .limit(1)
+        )
         if len(versions) == 0:
             old = None
         else:
@@ -181,10 +185,7 @@ class Entry(BaseModel):
         # use _equal to determine if the summaries are the same
         if not old or old.title != title or not _equal(old.summary, summary):
             new = EntryVersion.create(
-                title=title,
-                url=canonical_url,
-                summary=summary,
-                entry=self
+                title=title, url=canonical_url, summary=summary, entry=self
             )
             new.archive()
             if old:
@@ -217,7 +218,7 @@ class EntryVersion(BaseModel):
     summary = CharField()
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
-    entry = ForeignKeyField(Entry, backref='versions')
+    entry = ForeignKeyField(Entry, backref="versions")
 
     @property
     def diff(self):
@@ -226,7 +227,7 @@ class EntryVersion(BaseModel):
         this is the first version of a given entry.
         """
         try:
-            return Diff.select().where(Diff.new_id==self.id).get()
+            return Diff.select().where(Diff.new_id == self.id).get()
         except:
             return None
 
@@ -238,7 +239,7 @@ class EntryVersion(BaseModel):
         None if this version is the latest we know about.
         """
         try:
-            return Diff.select().where(Diff.old_id==self.id).get()
+            return Diff.select().where(Diff.old_id == self.id).get()
         except:
             return None
 
@@ -257,12 +258,17 @@ class EntryVersion(BaseModel):
                 self.save()
                 return self.archive_url
             else:
-                logging.error("unable to get archive url from %s [%s]: %s",
-                    save_url, resp.status_code, resp.headers)
+                logging.error(
+                    "unable to get archive url from %s [%s]: %s",
+                    save_url,
+                    resp.status_code,
+                    resp.headers,
+                )
 
         except Exception as e:
             logging.error("unexpected archive.org response for %s: %s", save_url, e)
         return None
+
 
 class Diff(BaseModel):
     old = ForeignKeyField(EntryVersion, backref="prev_diffs")
@@ -285,19 +291,16 @@ class Diff(BaseModel):
 
     @property
     def thumbnail_path(self):
-        return self.screenshot_path.replace('.png', '-thumb.png')
+        return self.screenshot_path.replace(".png", "-thumb.png")
 
     @property
     def url(self):
-
         def snap(url):
-            m = re.match(r'^https://web.archive.org/web/(\d+?)/.*$', url)
+            m = re.match(r"^https://web.archive.org/web/(\d+?)/.*$", url)
             return m.group(1) if m else None
 
-        return 'https://web.archive.org/web/diff/{}/{}/{}/'.format(
-            snap(self.old.archive_url),
-            snap(self.new.archive_url),
-            self.old.url
+        return "https://web.archive.org/web/diff/{}/{}/{}/".format(
+            snap(self.old.archive_url), snap(self.new.archive_url), self.old.url
         )
 
     def generate(self):
@@ -307,14 +310,13 @@ class Diff(BaseModel):
         else:
             return False
 
-
     def _generate_diff_html(self):
         if os.path.isfile(self.html_path):
             return
         tmpl_path = os.path.join(os.path.dirname(__file__), "diff.html")
         logging.debug("creating html diff: %s", self.html_path)
         diff = htmldiff.render_html_diff(self.old.html, self.new.html)
-        if '<ins>' not in diff and '<del>' not in diff:
+        if "<ins>" not in diff and "<del>" not in diff:
             return False
         tmpl = jinja2.Template(codecs.open(tmpl_path, "r", "utf8").read())
         html = tmpl.render(
@@ -324,9 +326,9 @@ class Diff(BaseModel):
             old_time=self.old.created,
             new_url=self.new.archive_url,
             new_time=self.new.created,
-            diff=diff
+            diff=diff,
         )
-        codecs.open(self.html_path, "w", 'utf8').write(html)
+        codecs.open(self.html_path, "w", "utf8").write(html)
         return True
 
     def _generate_diff_images(self):
@@ -335,9 +337,9 @@ class Diff(BaseModel):
 
         logging.debug("creating image screenshot %s", self.screenshot_path)
         browser.set_window_size(1400, 1000)
-        uri = 'file:///' + os.path.abspath(self.html_path)
+        uri = "file:///" + os.path.abspath(self.html_path)
         browser.get(uri)
-        time.sleep(5) # give the page time to load
+        time.sleep(5)  # give the page time to load
         browser.save_screenshot(self.screenshot_path)
         logging.debug("creating image thumbnail %s", self.thumbnail_path)
         browser.set_window_size(800, 400)
@@ -346,21 +348,23 @@ class Diff(BaseModel):
 
 
 def setup_logging():
-    path = config.get('log', home_path('diffengine.log'))
+    path = config.get("log", home_path("diffengine.log"))
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         filename=path,
-        filemode="a"
+        filemode="a",
     )
     logging.getLogger("readability.readability").setLevel(logging.WARNING)
     logging.getLogger("tweepy.binder").setLevel(logging.WARNING)
 
+
 def load_config(prompt=True):
     global config
     config_file = os.path.join(home, "config.yaml")
+    env_file = home_path(".env")
     if os.path.isfile(config_file):
-        config = EnvYAML(config_file)
+        config = EnvYAML(config_file, env_file=env_file)
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
@@ -369,19 +373,17 @@ def load_config(prompt=True):
         yaml.dump(config, open(config_file, "w"), default_flow_style=False)
     return config
 
+
 def get_initial_config():
     config = {"feeds": []}
 
-    while len(config['feeds']) == 0:
+    while len(config["feeds"]) == 0:
         url = input("What RSS/Atom feed would you like to monitor? ")
         feed = feedparser.parse(url)
         if len(feed.entries) == 0:
             print("Oops, that doesn't look like an RSS or Atom feed.")
         else:
-            config['feeds'].append({
-                "url": url,
-                "name": feed.feed.title
-            })
+            config["feeds"].append({"url": url, "name": feed.feed.title})
 
     answer = input("Would you like to set up tweeting edits? [Y/n] ")
     if answer.lower() == "y":
@@ -391,17 +393,19 @@ def get_initial_config():
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.secure = True
         auth_url = auth.get_authorization_url()
-        input("Log in to https://twitter.com as the user you want to tweet as and hit enter.")
+        input(
+            "Log in to https://twitter.com as the user you want to tweet as and hit enter."
+        )
         input("Visit %s in your browser and hit enter." % auth_url)
         pin = input("What is your PIN: ")
         token = auth.get_access_token(verifier=pin)
         config["twitter"] = {
             "consumer_key": consumer_key,
-            "consumer_secret": consumer_secret
+            "consumer_secret": consumer_secret,
         }
         config["feeds"][0]["twitter"] = {
             "access_token": token[0],
-            "access_token_secret": token[1]
+            "access_token_secret": token[1],
         }
 
     print("Saved your configuration in %s/config.yaml" % home.rstrip("/"))
@@ -409,19 +413,21 @@ def get_initial_config():
 
     return config
 
+
 def home_path(rel_path):
     return os.path.join(home, rel_path)
 
+
 def setup_db():
     global db
-    db_file = config.get('db', home_path('diffengine.db'))
+    db_file = config.get("db", home_path("diffengine.db"))
     logging.debug("connecting to db %s", db_file)
     db.init(db_file)
     db.connect()
     db.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
     try:
         migrator = SqliteMigrator(db)
-        migrate(migrator.add_index('entryversion', ('url',), False),)
+        migrate(migrator.add_index("entryversion", ("url",), False))
     except OperationalError as e:
         logging.debug(e)
 
@@ -429,7 +435,7 @@ def setup_db():
 def setup_browser():
     global browser
 
-    if not shutil.which('geckodriver'):
+    if not shutil.which("geckodriver"):
         sys.exit("Please install geckodriver and make sure it is in your PATH.")
 
     opts = FirefoxOptions()
@@ -438,7 +444,7 @@ def setup_browser():
 
 
 def tweet_diff(diff, token):
-    if 'twitter' not in config:
+    if "twitter" not in config:
         logging.debug("twitter not configured")
         return
     elif not token:
@@ -451,10 +457,10 @@ def tweet_diff(diff, token):
         logging.warn("not tweeting without archive urls")
         return
 
-    t = config['twitter']
-    auth = tweepy.OAuthHandler(t['consumer_key'], t['consumer_secret'])
+    t = config["twitter"]
+    auth = tweepy.OAuthHandler(t["consumer_key"], t["consumer_secret"])
     auth.secure = True
-    auth.set_access_token(token['access_token'], token['access_token_secret'])
+    auth.set_access_token(token["access_token"], token["access_token_secret"])
     twitter = tweepy.API(auth)
 
     status = diff.new.title
@@ -480,6 +486,7 @@ def init(new_home, prompt=True):
     setup_logging()
     setup_db()
 
+
 def main():
     if len(sys.argv) == 1:
         home = os.getcwd()
@@ -492,10 +499,10 @@ def main():
 
     checked = skipped = new = 0
 
-    for f in config.get('feeds', []):
-        feed, created = Feed.get_or_create(url=f['url'], name=f['name'])
+    for f in config.get("feeds", []):
+        feed, created = Feed.get_or_create(url=f["url"], name=f["name"])
         if created:
-            logging.debug("created new feed for %s", f['url'])
+            logging.debug("created new feed for %s", f["url"])
 
         # get latest feed entries
         feed.get_latest()
@@ -509,18 +516,24 @@ def main():
             try:
                 version = entry.get_latest()
             except Exception as e:
-                logging.error('unable to get latest', e)
+                logging.error("unable to get latest", e)
                 continue
             if version:
                 new += 1
-            if version and version.diff and 'twitter' in f:
-                tweet_diff(version.diff, f['twitter'])
+            if version and version.diff and "twitter" in f:
+                tweet_diff(version.diff, f["twitter"])
 
     elapsed = datetime.utcnow() - start_time
-    logging.info("shutting down: new=%s checked=%s skipped=%s elapsed=%s",
-        new, checked, skipped, elapsed)
+    logging.info(
+        "shutting down: new=%s checked=%s skipped=%s elapsed=%s",
+        new,
+        checked,
+        skipped,
+        elapsed,
+    )
 
     browser.quit()
+
 
 def _dt(d):
     return d.strftime("%Y-%m-%d %H:%M:%S")
@@ -529,20 +542,24 @@ def _dt(d):
 def _normal(s):
     # additional normalizations for readability + bleached text
     s = s.replace("\xa0", " ")
-    s = s.replace('“', '"')
-    s = s.replace('”', '"')
+    s = s.replace("“", '"')
+    s = s.replace("”", '"')
     s = s.replace("’", "'")
     s = s.replace("\n", " ")
     s = s.replace("­", "")
-    s = re.sub(r'  +', ' ', s)
+    s = re.sub(r"  +", " ", s)
     s = s.strip()
     return s
+
 
 def _equal(s1, s2):
     return _fingerprint(s1) == _fingerprint(s2)
 
-punctuation = dict.fromkeys(i for i in range(sys.maxunicode)
-        if unicodedata.category(chr(i)).startswith('P'))
+
+punctuation = dict.fromkeys(
+    i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P")
+)
+
 
 def _fingerprint(s):
     # make sure the string has been normalized, bleach everything, remove all
@@ -550,32 +567,25 @@ def _fingerprint(s):
     # for use during comparison
     s = _normal(s)
     s = bleach.clean(s, tags=[], strip=True)
-    s = re.sub(r'\s+', '', s, flags=re.MULTILINE)
+    s = re.sub(r"\s+", "", s, flags=re.MULTILINE)
     s = s.translate(punctuation)
     return s
+
 
 def _remove_utm(url):
     u = urlparse(url)
     q = parse_qs(u.query, keep_blank_values=True)
-    new_q = dict((k, v) for k, v in q.items() if not k.startswith('utm_'))
-    return urlunparse([
-        u.scheme,
-        u.netloc,
-        u.path,
-        u.params,
-        urlencode(new_q, doseq=True),
-        u.fragment
-    ])
+    new_q = dict((k, v) for k, v in q.items() if not k.startswith("utm_"))
+    return urlunparse(
+        [u.scheme, u.netloc, u.path, u.params, urlencode(new_q, doseq=True), u.fragment]
+    )
+
 
 def _get(url, allow_redirects=True):
     return requests.get(
-        url,
-        timeout=60,
-        headers={"User-Agent": UA},
-        allow_redirects=allow_redirects
+        url, timeout=60, headers={"User-Agent": UA}, allow_redirects=allow_redirects
     )
 
 
 if __name__ == "__main__":
     main()
-

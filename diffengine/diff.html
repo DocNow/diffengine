@@ -44,7 +44,7 @@
       function count(e, sel) {
         var length = 0;
         $(e).children(sel).each(function(i, c) {
-          length += $(c).text().length; 
+          length += $(c).text().length;
         });
         return length;
       }
@@ -100,8 +100,8 @@
     <header>
       <div class="url"><a href="{{ url }}">{{ url }}</a></div>
       <div class="archive">
-        <a href="{{ old_url }}">{{ old_time.strftime("%Y-%m-%d %H:%M:%S GMT") }}</a> 
-        ≠ 
+        <a href="{{ old_url }}">{{ old_time.strftime("%Y-%m-%d %H:%M:%S GMT") }}</a>
+        ≠
         <a href="{{ new_url }}">{{ new_time.strftime("%Y-%m-%d %H:%M:%S GMT") }}</a>
       </div>
     </header>
@@ -111,4 +111,3 @@
   </body>
 
 </html>
-

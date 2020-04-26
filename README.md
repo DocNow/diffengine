@@ -28,7 +28,7 @@ another website for people to watch, diffengine pushes updates out to social
 media where people are already, while also building a local database of diffs
 that can be used for research purposes.
 
-## Install 
+## Install
 
 1. install [GeckoDriver]
 1. install [Python 3]
@@ -42,10 +42,10 @@ directory in my home directory, but you can use whatever location you want, you
 just need to be able to write to it.
 
 The first time you run diffengine it will prompt you to enter an RSS or Atom
-feed URL to monitor and will authenticate with Twitter. 
+feed URL to monitor and will authenticate with Twitter.
 
 ```console
-% diffengine /home/ed/.diffengine 
+% diffengine /home/ed/.diffengine
 
 What RSS/Atom feed would you like to monitor? https://inkdroid.org/feed.xml
 
@@ -90,7 +90,7 @@ diffengine Twitter accounts that are out there.
 
 ## Multiple Accounts & Feed Implementation Example
 
-If you are setting multiple accounts, and multiple feeds if may be helpful to setup a 
+If you are setting multiple accounts, and multiple feeds if may be helpful to setup a
 directory for each account. For example:
 
 - Toronto Sun `/home/nruest/.torontosun`
@@ -134,7 +134,7 @@ twitter:
 
 ### Support for environment vars
 
-The configuration file has support for [environment variables](https://medium.com/chingu/an-introduction-to-environment-variables-and-how-to-use-them-f602f66d15fa). This is useful if you want to keeping your credentials secure when deploying to Heroku, Vercel (former ZEIT Now), AWS, Azure, Google Cloud or any other similar services. The environment variables are defined on the app of the platform you use or directly in a [dotenv file](https://12factor.net/config), which is the usual case when coding locally. 
+The configuration file has support for [environment variables](https://medium.com/chingu/an-introduction-to-environment-variables-and-how-to-use-them-f602f66d15fa). This is useful if you want to keeping your credentials secure when deploying to Heroku, Vercel (former ZEIT Now), AWS, Azure, Google Cloud or any other similar services. The environment variables are defined on the app of the platform you use or directly in a [dotenv file](https://12factor.net/config), which is the usual case when coding locally.
 
 For instance, say you want to keep your Twitter credentials safe. You'd keep a reference to it in the `config.yaml` this way:
 
@@ -160,7 +160,7 @@ Done! You can use diffengine as usual and keep your credentials safe.
 Here's how to get started hacking on diffengine with [pipenv]:
 
 ```console
-% git clone https://github.com/docnow/diffengine 
+% git clone https://github.com/docnow/diffengine
 % cd diffengine
 % pipenv install
 % pytest
@@ -173,6 +173,17 @@ test_diffengine.py .....
 
 =========================== 5 passed in 8.09 seconds ===========================
 ```
+
+Last, you need to install the pre-commit hooks to be run before any commit
+
+```
+pre-commit install
+```
+
+This way, [Black](https://black.readthedocs.io/en/stable/) formatter will be executed every time.
+
+We recommend you to [to configure it in your own IDE here.](https://black.readthedocs.io/en/stable/editor_integration.html)
+
 
 [nyt_diff]: https://twitter.com/nyt_diff
 [NYTDiff]: https://github.com/j-e-d/NYTdiff
