@@ -474,8 +474,6 @@ def tweet_diff(diff, token):
 def init(new_home, prompt=True):
     global home
     home = new_home
-    env_path = "%s/.env" % new_home
-    load_dotenv(dotenv_path=env_path)
     load_config(prompt)
     setup_browser()
     setup_logging()
