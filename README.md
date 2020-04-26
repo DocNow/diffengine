@@ -132,6 +132,27 @@ twitter:
   consumer_secret: CONSUMER_SECRET
 ```
 
+### Support for environment vars
+
+The configuration file has support for [environment variables](https://medium.com/chingu/an-introduction-to-environment-variables-and-how-to-use-them-f602f66d15fa). This is useful if you want to keeping your credentials secure when deploying to Heroku, Vercel (former ZEIT Now), AWS, Azure, Google Cloud or any other similar services. The environment variables are defined on the app of the platform you use or directly in a [dotenv file](https://12factor.net/config), which is the usual case when coding locally. 
+
+For instance, say you want to keep your Twitter credentials safe. You'd keep a reference to it in the `config.yaml` this way:
+
+```yml
+twitter:
+  consumer_key: "${MY_CONSUMER_KEY_ENV_VAR}"
+  consumer_secret: "${MY_CONSUMER_SECRET_ENV_VAR}"
+```
+
+Then you would define your environment variables `MY_CONSUMER_KEY_ENV_VAR` and `MY_CONSUMER_SECRET_ENV_VAR` in your `.env` file:
+
+```dotenv
+MY_CONSUMER_KEY_ENV_VAR="CONSUMER_KEY"
+MY_CONSUMER_SECRET_ENV_VAR="CONSUMER_SECRET"
+```
+
+Done! You can use diffengine as usual and keep your credentials safe.
+
 ## Develop
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)
