@@ -607,12 +607,12 @@ def _get(url, allow_redirects=True):
     )
 
 
-# Cli options
-parser = argparse.ArgumentParser()
-parser.add_argument("--add", action="store_true")
-options = parser.parse_args()
-
 if __name__ == "__main__":
+    # Cli options
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--add", action="store_true")
+    options = parser.parse_args()
+
     if options.add:
         get_auth_link_and_show_token()
     else:
