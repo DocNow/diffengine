@@ -10,7 +10,8 @@ if os.path.isdir("test"):
     shutil.rmtree("test")
 
 # set things up but disable prompting for initial feed
-init("test", prompt=False)
+test_home = "test"
+init(test_home, prompt=False)
 
 # the sequence of these tests is significant
 
@@ -74,7 +75,7 @@ def test_html_diff():
 def test_many_to_many():
 
     # these two feeds share this entry, we want diffengine to support
-    # multiple feeds for the same content, which is fairly common at 
+    # multiple feeds for the same content, which is fairly common at
     # large media organizations with multiple topical feeds
     url="https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
 
@@ -116,3 +117,31 @@ def test_fingerprint():
     assert _fingerprint("foo<br>bar") == "foobar"
     assert _fingerprint("foo'bar") == "foobar"
     assert _fingerprint("foo’bar") == "foobar"
+
+def test_environment_vars_in_config_file():
+    # Test values
+    public_value = "public value"
+    private_yaml_key = "${PRIVATE_VAR}"
+    private_value = "private value"
+
+    # Create dot env that that will read
+    dotenv_file = open(".env","w+")
+    dotenv_file.write("PRIVATE_VAR=%s\n" % private_value)
+
+    # Create config.yaml that will be read
+    test_config = {
+        "example": {
+            "private_value": private_yaml_key,
+            "public_value": public_value
+        }
+    }
+    config_file = home_path(test_home, "config.yaml");
+    yaml.dump(test_config, open(config_file, "w"), default_flow_style=False)
+
+    # Test!
+    init("test")
+    config = get_initial_config()
+    assert config['example']['public_value'] == public_value
+    assert config['example']['private_value'] != private_yaml_key
+    assert config['example']['private_value'] == private_value
+

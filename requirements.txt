@@ -11,3 +11,4 @@ selenium
 feedparser
 readability-lxml
 https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2
+envyaml>=0.1912
