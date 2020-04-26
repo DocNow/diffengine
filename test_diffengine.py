@@ -135,13 +135,12 @@ def test_environment_vars_in_config_file():
             "public_value": public_value
         }
     }
-    config_file = home_path(test_home, "config.yaml");
+    config_file = home_path("config.yaml");
     yaml.dump(test_config, open(config_file, "w"), default_flow_style=False)
 
     # Test!
-    init("test")
-    config = get_initial_config()
-    assert config['example']['public_value'] == public_value
-    assert config['example']['private_value'] != private_yaml_key
-    assert config['example']['private_value'] == private_value
+    new_config = load_config()
+    assert new_config['example']['public_value'] == public_value
+    assert new_config['example']['private_value'] != private_yaml_key
+    assert new_config['example']['private_value'] == private_value
 

@@ -367,6 +367,7 @@ def load_config(prompt=True):
         if prompt:
             config = get_initial_config()
         yaml.dump(config, open(config_file, "w"), default_flow_style=False)
+    return config
 
 def get_initial_config():
     config = {"feeds": []}
