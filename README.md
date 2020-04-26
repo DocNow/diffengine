@@ -153,6 +153,85 @@ MY_CONSUMER_SECRET_ENV_VAR="CONSUMER_SECRET"
 
 Done! You can use diffengine as usual and keep your credentials safe.
 
+## Adding a Twitter account when the configuration file is already created
+
+You can use the following command for adding Twitter accounts to the config file.
+
+```shell script
+$ diffengine --add
+
+Log in to https://twitter.com as the user you want to tweet as and hit enter.
+Visit https://api.twitter.com/oauth/authorize?oauth_token=QKGAqgAAAAABDsonAAABcbfQfFw in your browser and hit enter.
+What is your PIN: 1234567
+
+These are your access token and secret.
+DO NOT SHARE THEM WITH ANYONE!
+
+ACCESS_TOKEN
+xxxxxxxxxxx-yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+
+ACCESS_TOKEN_SECRET
+zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+```
+
+Then you would use the `ACCESS_TOKEN` and the `ACCESS_TOKEN_SECRET` inside the config like this
+
+```shell script
+feeds:
+- name: My new feed
+  url: http://www.mynewfeed.com/feed/
+  twitter:
+    access_token: "${ACCESS_TOKEN}"
+    access_token_secret: "${ACCESS_TOKEN_SECRET}"
+```
+
+### Avaiable webdriver engines
+
+Diffengine has support for `geckodriver` and `chromedriver`.
+
+You can configure this in the `config.yaml`. The keys are the following ones.
+```yml
+webdriver:
+  engine:
+  executable_path:
+  binary_location:
+```
+
+#### Configuring geckodriver
+
+The `geckodriver` is properly defined by default. In case you need to configure it, then:
+
+```yml
+webdriver:
+  engine: "geckodriver"
+  executable_path: null (this config has no use with geckodriver)
+  binary_location: null (the same as above with this one)
+```
+
+#### Configuring chromedriver
+
+If you want to use `chromedriver` locally, then you should leave the config this way:
+
+```yml
+webdriver:
+  engine: "chromedriver"
+  executable_path: null ("chromedriver" by default)
+  binary_location: null ("" by default)
+```
+
+##### Using chromedriver in Heroku
+
+If you use Heroku, then you have to add the [Heroku chromedriver buildpack](https://github.com/heroku/heroku-buildpack-chromedriver).
+And then use the environment vars provided automatically by it.
+
+```yml
+webdriver:
+  engine: "chromedriver"
+  executable_path: "${CHROMEDRIVER_PATH}"
+  binary_location: "${GOOGLE_CHROME_BIN}"
+```
+
+
 ## Develop
 
 [![Build Status](https://travis-ci.org/DocNow/diffengine.svg)](http://travis-ci.org/DocNow/diffengine)

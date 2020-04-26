@@ -30,9 +30,12 @@ from peewee import *
 from playhouse.migrate import SqliteMigrator, migrate
 from datetime import datetime, timedelta
 from selenium import webdriver
-from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
+
+from diffengine.exceptions import UnknownWebdriverError
 
 home = None
 config = {}
@@ -364,7 +367,9 @@ def load_config(prompt=True):
     config_file = os.path.join(home, "config.yaml")
     env_file = home_path(".env")
     if os.path.isfile(config_file):
-        config = EnvYAML(config_file, env_file=env_file)
+        config = EnvYAML(
+            config_file, env_file=env_file if os.path.isfile(env_file) else None
+        )
     else:
         if not os.path.isdir(home):
             os.makedirs(home)
@@ -451,15 +456,37 @@ def setup_db():
         logging.debug(e)
 
 
-def setup_browser():
-    global browser
+def chromedriver_browser(executable_path, binary_location):
+    options = ChromeOptions()
+    options.binary_location = binary_location
+    options.add_argument("--headless")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    return webdriver.Chrome(executable_path=executable_path, options=options)
 
-    if not shutil.which("geckodriver"):
-        sys.exit("Please install geckodriver and make sure it is in your PATH.")
 
+def geckodriver_browser():
     opts = FirefoxOptions()
     opts.headless = True
-    browser = webdriver.Firefox(options=opts)
+    return webdriver.Firefox(options=opts)
+
+
+def setup_browser(engine="geckodriver", executable_path=None, binary_location=""):
+    global browser
+
+    if engine not in ["chromedriver", "geckodriver"]:
+        raise UnknownWebdriverError(engine)
+
+    if not shutil.which(engine):
+        sys.exit("Please install %s and make sure it is in your PATH." % engine)
+
+    if engine == "chromedriver":
+        return chromedriver_browser(
+            engine if executable_path is None else executable_path, binary_location
+        )
+
+    if engine == "geckodriver":
+        return geckodriver_browser()
 
 
 def tweet_diff(diff, token):
@@ -498,12 +525,19 @@ def tweet_diff(diff, token):
 
 
 def init(new_home, prompt=True):
-    global home
+    global home, browser
     home = new_home
     load_config(prompt)
-    setup_browser()
-    setup_logging()
-    setup_db()
+    try:
+        # by defualt keep using geckodriver
+        engine = config.get("webdriver.engine", "geckodriver")
+        executable_path = config.get("webdriver.executable_path")
+        binary_location = config.get("webdriver.binary_location")
+        browser = setup_browser(engine, executable_path, binary_location)
+        setup_logging()
+        setup_db()
+    except RuntimeError as e:
+        logging.error("Could not finish the setup", e)
 
 
 def main():
