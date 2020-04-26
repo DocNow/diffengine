@@ -118,17 +118,20 @@ def test_fingerprint():
     assert _fingerprint("foo'bar") == "foobar"
     assert _fingerprint("foo’bar") == "foobar"
 
+@pytest.mark.skipif(os.environ.get('TRAVIS') is not None,
+                    reason="this .env test fails on Travis")
 def test_environment_vars_in_config_file():
-    # Test values
+
+    # test values
     public_value = "public value"
     private_yaml_key = "${PRIVATE_VAR}"
     private_value = "private value"
 
-    # Create dot env that that will read
+    # create dot env that that will read
     dotenv_file = open(".env","w+")
     dotenv_file.write("PRIVATE_VAR=%s\n" % private_value)
 
-    # Create config.yaml that will be read
+    # create config.yaml that will be read
     test_config = {
         "example": {
             "private_value": private_yaml_key,
@@ -138,7 +141,7 @@ def test_environment_vars_in_config_file():
     config_file = home_path("config.yaml");
     yaml.dump(test_config, open(config_file, "w"), default_flow_style=False)
 
-    # Test!
+    # test!
     new_config = load_config()
     assert new_config['example']['public_value'] == public_value
     assert new_config['example']['private_value'] != private_yaml_key
