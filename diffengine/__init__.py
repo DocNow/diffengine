@@ -17,6 +17,7 @@ import jinja2
 import shutil
 import tweepy
 import logging
+import argparse
 import htmldiff
 import requests
 import selenium
@@ -24,8 +25,6 @@ import feedparser
 import subprocess
 import readability
 import unicodedata
-import yaml
-import argparse
 
 from peewee import *
 from playhouse.migrate import SqliteMigrator, migrate
