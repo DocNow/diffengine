@@ -3,6 +3,8 @@ branches:
     - master
 python:
   - 3.7
+addons:
+  chrome: stable
 language: python
 cache: pip
 script: py.test
