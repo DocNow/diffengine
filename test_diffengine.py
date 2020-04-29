@@ -209,10 +209,24 @@ class EntryTest(TestCase):
         type(entry).stale = PropertyMock(return_value=False)
 
         # Test
-        result = process_entry(entry)
+        result = process_entry(entry, None, None)
 
         # Assert
         assert result["skipped"] == 1
+
+    def test_raise_if_entry_retrieve_fails(self):
+        # Prepare
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=True)
+        entry.get_latest = MagicMock(side_effect=Exception)
+
+        # Test
+        result = process_entry(entry, None, None)
+
+        # Assert
+        entry.get_latest.assert_called_once()
+        assert result["checked"] == 1
+        assert result["new"] == 0
 
     def test_do_not_tweet_if_entry_has_no_diff(self):
         # Prepare
@@ -227,12 +241,12 @@ class EntryTest(TestCase):
         entry.get_latest = MagicMock(return_value=version)
 
         # Test
-        result = process_entry(entry, None)
+        result = process_entry(entry, None, twitter)
 
         # Assert
+        entry.get_latest.assert_called_once()
         assert result["checked"] == 1
         assert result["new"] == 1
-        entry.get_latest.assert_called_once()
         twitter.tweet_diff.assert_not_called()
 
     def test_do_not_tweet_if_feed_has_no_token(self):
@@ -251,9 +265,9 @@ class EntryTest(TestCase):
         result = process_entry(entry, None, twitter)
 
         # Assert
+        entry.get_latest.assert_called_once()
         assert result["checked"] == 1
         assert result["new"] == 1
-        entry.get_latest.assert_called_once()
         twitter.tweet_diff.assert_not_called()
 
     def test_do_tweet_if_entry_has_diff(self):
@@ -273,8 +287,7 @@ class EntryTest(TestCase):
         result = process_entry(entry, token, twitter)
 
         # Assert
+        entry.get_latest.assert_called_once()
         assert result["checked"] == 1
         assert result["new"] == 1
-
-        entry.get_latest.assert_called_once()
         twitter.tweet_diff.assert_called_once()
