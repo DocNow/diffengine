@@ -35,8 +35,8 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
 
-from diffengine.exceptions import UnknownWebdriverError
-from diffengine.twitter import Twitter
+from diffengine.exceptions import UnknownWebdriverError, TwitterConfigError
+from diffengine.twitter import TwitterHandler
 
 home = None
 config = {}
@@ -525,12 +525,17 @@ def main():
 
         # get latest feed entries
         feed.get_latest()
-
-        twitter = Twitter(config)
+        try:
+            twitter_handler = TwitterHandler(
+                config["consumer_key"], config["consumer_secret"]
+            )
+        except TwitterConfigError as e:
+            twitter_handler = None
+            logging.warning("error with Twitter handler. Reason", str(e))
 
         # get latest content for each entry
         for entry in feed.entries:
-            result = process_entry(entry, f["twitter"], twitter)
+            result = process_entry(entry, f["twitter"], twitter_handler)
             skipped += result["skipped"]
             checked += result["checked"]
             new += result["new"]

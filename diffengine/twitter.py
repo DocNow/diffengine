@@ -3,6 +3,8 @@ import tweepy
 
 from datetime import datetime
 
+from diffengine.exceptions import TwitterConfigError
+
 
 def build_text(diff):
     text = diff.new.title
@@ -13,23 +15,16 @@ def build_text(diff):
     return text
 
 
-class Twitter:
+class TwitterHandler:
     consumer_key = None
     consumer_secret = None
 
-    def __init__(self, config):
-        twitter_config = config.get("twitter", None)
-        if twitter_config is None:
-            logging.debug("twitter not configured")
-            return
-        elif (
-            not twitter_config["consumer_key"] or not twitter_config["consumer_secret"]
-        ):
-            logging.debug("consumer key/secret not set up for feed")
-            return
+    def __init__(self, consumer_key, consumer_secret):
+        if not consumer_key or not consumer_secret:
+            raise TwitterConfigError()
 
-        self.consumer_key = twitter_config["consumer_key"]
-        self.consumer_secret = twitter_config["consumer_secret"]
+        self.consumer_key = consumer_key
+        self.consumer_secret = consumer_secret
 
         auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_key)
         auth.secure = True

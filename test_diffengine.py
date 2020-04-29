@@ -24,8 +24,9 @@ from diffengine import (
     UnknownWebdriverError,
     process_entry,
     UA,
-    Twitter,
+    TwitterHandler,
 )
+from diffengine.exceptions import TwitterConfigError
 
 if os.path.isdir("test"):
     shutil.rmtree("test")
@@ -295,5 +296,16 @@ class EntryTest(TestCase):
 
 
 class TweetTest(TestCase):
-    def test_do_nothing_if_has_no_token(self):
-        twitter = Twitter()
+    def test_raises_if_no_config_set(self):
+        self.assertRaises(TwitterConfigError, TwitterHandler, None, None)
+        self.assertRaises(TwitterConfigError, TwitterHandler, "myConsumerKey", None)
+        self.assertRaises(TwitterConfigError, TwitterHandler, None, "myConsumerSecret")
+
+        try:
+            TwitterHandler("myConsumerKey", "myConsumerSecret")
+        except TwitterConfigError:
+            self.fail("Twitter.__init__ raised TwitterConfigError unexpectedly!")
+
+    def test_do_nothing_if(self):
+        config = {"twitter": {"consumer_key": "test", "consumer_secret": "test"}}
+        twitter = TwitterHandler(config)
