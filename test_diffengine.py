@@ -8,7 +8,7 @@ import setup
 import pytest
 import shutil
 
-from unittest.mock import patch
+from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import PropertyMock
 
@@ -204,69 +204,79 @@ def test_webdriver_is_chromedriver():
     assert isinstance(browser, webdriver.Chrome) == True
 
 
-def test_entry_stale():
-    entry = MagicMock()
-    type(entry).stale = PropertyMock(return_value=False)
-    result = process_entry(entry)
-    assert result["skipped"] == 1
+class EntryTest(TestCase):
+    def test_stale_is_skipped(self):
+        # Prepare
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=False)
 
+        # Test
+        result = process_entry(entry)
 
-def test_entry_stale():
-    # Mock the entry and the stale property result
-    entry = MagicMock()
-    type(entry).stale = PropertyMock(return_value=False)
-    result = process_entry(entry)
-    assert result["skipped"] == 1
+        # Assert
+        assert result["skipped"] == 1
 
+    def test_do_not_tweet_if_entry_has_no_diff(self):
+        # Prepare
+        twitter = MagicMock()
+        twitter.tweet_diff = MagicMock()
 
-def test_twitter_do_nothing_if_entry_has_no_diff():
-    # Mock that returns no diff
-    tweet_diff = MagicMock(name="tweet_diff")
-    version = MagicMock()
-    type(version).diff = PropertyMock(return_value=None)
+        version = MagicMock()
+        type(version).diff = PropertyMock(return_value=None)
 
-    entry = MagicMock()
-    type(entry).stale = PropertyMock(return_value=True)
-    entry.get_latest = MagicMock(return_value=version)
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=True)
+        entry.get_latest = MagicMock(return_value=version)
 
-    result = process_entry(entry, None)
-    assert result["checked"] == 1
-    assert result["new"] == 1
-    assert entry.get_latest.called
-    assert not tweet_diff.called
+        # Test
+        result = process_entry(entry, None)
 
+        # Assert
+        assert result["checked"] == 1
+        assert result["new"] == 1
+        entry.get_latest.assert_called_once()
+        twitter.tweet_diff.assert_not_called()
 
-def test_twitter_do_nothing_if_feed_has_no_token():
-    # Mock that returns no diff but it has no token
-    tweet_diff = MagicMock(name="tweet_diff")
-    version = MagicMock()
-    type(version).diff = PropertyMock(return_value=None)
+    def test_do_not_tweet_if_feed_has_no_token(self):
+        # Prepare
+        twitter = MagicMock()
+        twitter.tweet_diff = MagicMock()
 
-    entry = MagicMock()
-    type(entry).stale = PropertyMock(return_value=True)
-    entry.get_latest = MagicMock(return_value=version)
+        version = MagicMock()
+        type(version).diff = PropertyMock(return_value=None)
 
-    result = process_entry(entry, None)
-    assert result["checked"] == 1
-    assert result["new"] == 1
-    assert entry.get_latest.called
-    assert not tweet_diff.called
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=True)
+        entry.get_latest = MagicMock(return_value=version)
 
+        # Test
+        result = process_entry(entry, None, twitter)
 
-def test_twitter_do_tweet_diff_if_entry_has_diff():
-    # Mock that returns a diff
-    tweet_diff = MagicMock(name="tweet_diff")
-    version = MagicMock()
-    type(version).diff = PropertyMock(return_value=MagicMock())
+        # Assert
+        assert result["checked"] == 1
+        assert result["new"] == 1
+        entry.get_latest.assert_called_once()
+        twitter.tweet_diff.assert_not_called()
 
-    entry = MagicMock()
-    type(entry).stale = PropertyMock(return_value=True)
-    entry.get_latest = MagicMock(return_value=version)
+    def test_do_tweet_if_entry_has_diff(self):
+        # Prepare
+        twitter = MagicMock()
+        twitter.tweet_diff = MagicMock()
 
-    token = {"access_token": "test", "access_token_secret": "test"}
-    result = process_entry(entry, token)
+        version = MagicMock()
+        type(version).diff = PropertyMock(return_value=MagicMock())
 
-    assert result["checked"] == 1
-    assert result["new"] == 1
-    assert entry.get_latest.called
-    assert tweet_diff.called
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=True)
+        entry.get_latest = MagicMock(return_value=version)
+
+        # Test
+        token = {"access_token": "test", "access_token_secret": "test"}
+        result = process_entry(entry, token, twitter)
+
+        # Assert
+        assert result["checked"] == 1
+        assert result["new"] == 1
+
+        entry.get_latest.assert_called_once()
+        twitter.tweet_diff.assert_called_once()

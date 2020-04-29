@@ -36,7 +36,7 @@ from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
 
 from diffengine.exceptions import UnknownWebdriverError
-from diffengine.tweet_utils import tweet_diff, tweet_thread
+from diffengine.twitter import Twitter
 
 home = None
 config = {}
@@ -526,9 +526,11 @@ def main():
         # get latest feed entries
         feed.get_latest()
 
+        twitter = Twitter(config)
+
         # get latest content for each entry
         for entry in feed.entries:
-            result = process_entry(entry, f["twitter"])
+            result = process_entry(entry, f["twitter"], twitter)
             skipped += result["skipped"]
             checked += result["checked"]
             new += result["new"]
@@ -545,7 +547,7 @@ def main():
     browser.quit()
 
 
-def process_entry(entry, token=None):
+def process_entry(entry, token=None, twitter=None):
     result = {"skipped": 0, "checked": 0, "new": 0}
     if not entry.stale:
         result["skipped"] = 1
@@ -555,7 +557,7 @@ def process_entry(entry, token=None):
             version = entry.get_latest()
             result["new"] = 1
             if version.diff and token is not None:
-                tweet_diff(version.diff, token, config)
+                twitter.tweet_diff(version.diff, token)
         except Exception as e:
             logging.error("unable to get latest", e)
             return result
