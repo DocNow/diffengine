@@ -24,6 +24,7 @@ from diffengine import (
     UnknownWebdriverError,
     process_entry,
     UA,
+    Twitter,
 )
 
 if os.path.isdir("test"):
@@ -291,3 +292,8 @@ class EntryTest(TestCase):
         assert result["checked"] == 1
         assert result["new"] == 1
         twitter.tweet_diff.assert_called_once()
+
+
+class TweetTest(TestCase):
+    def test_do_nothing_if_has_no_token(self):
+        twitter = Twitter()

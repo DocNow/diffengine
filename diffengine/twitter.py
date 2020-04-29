@@ -28,9 +28,10 @@ class Twitter:
             logging.debug("consumer key/secret not set up for feed")
             return
 
-        self.consumer_key = twitter_config["access_token"]
-        self.consumer_secret = twitter_config["access_secret"]
-        auth = tweepy.OAuthHandler(t["consumer_key"], t["consumer_secret"])
+        self.consumer_key = twitter_config["consumer_key"]
+        self.consumer_secret = twitter_config["consumer_secret"]
+
+        auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_key)
         auth.secure = True
         self.auth = auth
 
