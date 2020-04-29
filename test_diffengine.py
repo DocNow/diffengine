@@ -1,17 +1,36 @@
 import os
 import re
+
+import yaml
+from selenium import webdriver
+
 import setup
 import pytest
 import shutil
 
-from diffengine import *
+from unittest.mock import patch
+from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
+
+from diffengine import (
+    init,
+    Feed,
+    EntryVersion,
+    Entry,
+    FeedEntry,
+    home_path,
+    load_config,
+    setup_browser,
+    UnknownWebdriverError,
+    process_entry,
+    UA,
+)
 
 if os.path.isdir("test"):
     shutil.rmtree("test")
 
 # set things up but disable prompting for initial feed
-test_home = "test"
-init(test_home, prompt=False)
+init("test", prompt=False)
 
 # the sequence of these tests is significant
 
@@ -183,3 +202,71 @@ def test_webdriver_is_chromedriver():
     # create config.yaml that will be read
     browser = setup_browser("chromedriver")
     assert isinstance(browser, webdriver.Chrome) == True
+
+
+def test_entry_stale():
+    entry = MagicMock()
+    type(entry).stale = PropertyMock(return_value=False)
+    result = process_entry(entry)
+    assert result["skipped"] == 1
+
+
+def test_entry_stale():
+    # Mock the entry and the stale property result
+    entry = MagicMock()
+    type(entry).stale = PropertyMock(return_value=False)
+    result = process_entry(entry)
+    assert result["skipped"] == 1
+
+
+def test_twitter_do_nothing_if_entry_has_no_diff():
+    # Mock that returns no diff
+    tweet_diff = MagicMock(name="tweet_diff")
+    version = MagicMock()
+    type(version).diff = PropertyMock(return_value=None)
+
+    entry = MagicMock()
+    type(entry).stale = PropertyMock(return_value=True)
+    entry.get_latest = MagicMock(return_value=version)
+
+    result = process_entry(entry, None)
+    assert result["checked"] == 1
+    assert result["new"] == 1
+    assert entry.get_latest.called
+    assert not tweet_diff.called
+
+
+def test_twitter_do_nothing_if_feed_has_no_token():
+    # Mock that returns no diff but it has no token
+    tweet_diff = MagicMock(name="tweet_diff")
+    version = MagicMock()
+    type(version).diff = PropertyMock(return_value=None)
+
+    entry = MagicMock()
+    type(entry).stale = PropertyMock(return_value=True)
+    entry.get_latest = MagicMock(return_value=version)
+
+    result = process_entry(entry, None)
+    assert result["checked"] == 1
+    assert result["new"] == 1
+    assert entry.get_latest.called
+    assert not tweet_diff.called
+
+
+def test_twitter_do_tweet_diff_if_entry_has_diff():
+    # Mock that returns a diff
+    tweet_diff = MagicMock(name="tweet_diff")
+    version = MagicMock()
+    type(version).diff = PropertyMock(return_value=MagicMock())
+
+    entry = MagicMock()
+    type(entry).stale = PropertyMock(return_value=True)
+    entry.get_latest = MagicMock(return_value=version)
+
+    token = {"access_token": "test", "access_token_secret": "test"}
+    result = process_entry(entry, token)
+
+    assert result["checked"] == 1
+    assert result["new"] == 1
+    assert entry.get_latest.called
+    assert tweet_diff.called
