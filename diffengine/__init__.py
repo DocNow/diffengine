@@ -99,7 +99,7 @@ class Entry(BaseModel):
     url = CharField()
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
-    tweet_status_id_str = CharField()
+    tweet_status_id_str = CharField(null=True)
 
     @property
     def feeds(self):
@@ -225,7 +225,7 @@ class EntryVersion(BaseModel):
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, backref="versions")
-    tweet_status_id_str = CharField()
+    tweet_status_id_str = CharField(null=True)
 
     @property
     def diff(self):
