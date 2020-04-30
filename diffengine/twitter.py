@@ -71,7 +71,7 @@ class TwitterHandler:
                     diff.old.entry, diff.old, token
                 )
                 logging.info(
-                    "created thread https://twitter/%s/status/%s"
+                    "created thread https://twitter.com/%s/status/%s"
                     % (self.auth.get_username(), thread_status_id_str)
                 )
             except UpdateStatusError as e:
