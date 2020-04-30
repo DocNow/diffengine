@@ -466,6 +466,29 @@ class TwitterHandlerTest(TestCase):
         )
         mocked_update_status.assert_called_once()
 
+    @patch("tweepy.API.update_status", return_value=MockedStatus)
+    def test_create_thread_success(self, mocked_update_status):
+        entry = MagicMock()
+        type(entry).save = MagicMock()
+        version = MagicMock()
+        type(version).save = MagicMock()
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+
+        status_id_str = twitter.create_thread(
+            entry,
+            version,
+            {
+                "access_token": "myAccessToken",
+                "access_token_secret": "myAccessTokenSecret",
+            },
+        )
+
+        self.assertEqual(status_id_str, mocked_update_status.return_value.id_str)
+
+        mocked_update_status.assert_called_once()
+        entry.save.assert_called_once()
+        version.save.assert_called_once()
+
 
 def get_mocked_diff(with_archive_urls=True):
     old = MagicMock()
