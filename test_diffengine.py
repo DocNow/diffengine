@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 
@@ -211,6 +212,12 @@ class WebdriverTest(TestCase):
 
 
 class EntryTest(TestCase):
+    def setUp(self) -> None:
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self) -> None:
+        logging.disable(logging.NOTSET)
+
     def test_stale_is_skipped(self):
         # Prepare
         entry = MagicMock()
@@ -226,7 +233,7 @@ class EntryTest(TestCase):
         # Prepare
         entry = MagicMock()
         type(entry).stale = PropertyMock(return_value=True)
-        entry.get_latest = MagicMock(side_effect=Exception)
+        entry.get_latest = MagicMock(side_effect=Exception("TEST"))
 
         # Test
         result = process_entry(entry, None, None)
@@ -320,6 +327,12 @@ class EntryTest(TestCase):
 
 
 class TwitterHandlerTest(TestCase):
+    def setUp(self) -> None:
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self) -> None:
+        logging.disable(logging.NOTSET)
+
     def test_raises_if_no_config_set(self):
         self.assertRaises(ConfigNotFoundError, TwitterHandler, None, None)
         self.assertRaises(ConfigNotFoundError, TwitterHandler, "myConsumerKey", None)
@@ -366,10 +379,14 @@ class TwitterHandlerTest(TestCase):
         except AchiveUrlNotFoundError:
             self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")
 
+    class MockedStatus(MagicMock):
+        id_str = PropertyMock(return_value="1234567890")
+
     @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
+    @patch("tweepy.API.update_with_media", return_value=MockedStatus)
     @patch("diffengine.TwitterHandler.create_thread")
     def test_create_thread_if_old_entry_has_no_related_tweet(
-        self, mocked_create_thread, mocked_get_username
+        self, mocked_create_thread, mocked_update_with_media, mocked_get_username
     ):
 
         entry = MagicMock()
@@ -388,7 +405,8 @@ class TwitterHandlerTest(TestCase):
         )
 
         mocked_create_thread.assert_called_once()
-        mocked_get_username.assert_called_once()
+        mocked_update_with_media.assert_called_once()
+        mocked_get_username.assert_called()
 
     @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
     @patch("diffengine.TwitterHandler.create_thread")
@@ -413,9 +431,6 @@ class TwitterHandlerTest(TestCase):
 
         mocked_create_thread.assert_not_called()
         mocked_get_username.assert_called_once()
-
-    class MockedStatus(MagicMock):
-        id_str = PropertyMock(return_value="1234567890")
 
     @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
     @patch("tweepy.API.update_with_media", return_value=MockedStatus)
