@@ -347,7 +347,6 @@ class TwitterHandlerTest(TestCase):
         except AchiveUrlNotFoundError:
             self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")
 
-    @patch("diffengine.TwitterHandler.tweet_thread")
     def test_create_thread_if_old_entry_has_no_related_tweet(self, mocked_tweet_thread):
 
         entry = MagicMock()
@@ -386,6 +385,67 @@ class TwitterHandlerTest(TestCase):
         )
 
         mocked_tweet_thread.assert_not_called()
+
+    class MockedStatus(MagicMock):
+        id_str = PropertyMock(return_value="1234567890")
+
+    @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
+    @patch("tweepy.API.update_with_media", return_value=MockedStatus)
+    def test_update_thread_if_old_entry_has_related_tweet(
+        self, mocked_update_with_media, mocked_get_username
+    ):
+        entry = MagicMock()
+        type(entry).tweet_status_id_str = PropertyMock(return_value="1234567890")
+
+        diff = get_mocked_diff()
+        type(diff.old).entry = entry
+        type(diff.new).tweet_status_id_str = PropertyMock()
+        type(diff.new).save = MagicMock()
+        type(diff).tweeted = PropertyMock(return_value=False)
+        type(diff).save = MagicMock()
+
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        twitter.tweet_diff(
+            diff,
+            {
+                "access_token": "myAccessToken",
+                "access_token_secret": "myAccessTokenSecret",
+            },
+        )
+
+        mocked_update_with_media.assert_called_once()
+        mocked_get_username.assert_called_once()
+        diff.new.save.assert_called_once()
+        diff.save.assert_called_once()
+
+    @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
+    @patch("tweepy.API.update_with_media", side_effect=Exception)
+    def test_raise_when_thread_tweet_fails(
+        self, mocked_update_with_media, mocked_get_username
+    ):
+        entry = MagicMock()
+        type(entry).tweet_status_id_str = PropertyMock(return_value="1234567890")
+
+        diff = get_mocked_diff()
+        type(diff.old).entry = entry
+        type(diff.new).tweet_status_id_str = PropertyMock()
+        type(diff.new).save = MagicMock()
+        type(diff).tweeted = PropertyMock(return_value=False)
+        type(diff).save = MagicMock()
+
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        twitter.tweet_diff(
+            diff,
+            {
+                "access_token": "myAccessToken",
+                "access_token_secret": "myAccessTokenSecret",
+            },
+        )
+
+        mocked_update_with_media.assert_called_once()
+        mocked_get_username.assert_not_called()
+        diff.new.save.assert_not_called()
+        diff.save.assert_not_called()
 
 
 def get_mocked_diff(with_archive_urls=True):
