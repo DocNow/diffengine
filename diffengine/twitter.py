@@ -23,7 +23,7 @@ class TwitterHandler:
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
 
-        auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_key)
+        auth = tweepy.OAuthHandler(self.consumer_key, self.consumer_secret)
         auth.secure = True
         self.auth = auth
 
