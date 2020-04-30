@@ -315,6 +315,7 @@ class Diff(BaseModel):
             snap(self.old.archive_url), snap(self.new.archive_url), self.old.url
         )
 
+    # TODO: configurable option for deleting the diffs after some time (1 week?)
     def generate(self):
         if self._generate_diff_html():
             self._generate_diff_images()
