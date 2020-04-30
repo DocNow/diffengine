@@ -198,7 +198,12 @@ class Entry(BaseModel):
                 logging.debug("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 if not diff.generate():
-                    logging.warn("html diff showed no changes: %s", self.url)
+                    logging.warn(
+                        "html diff showed no changes between versions #%s and #%s: %s",
+                        old.id,
+                        new.id,
+                        self.url,
+                    )
                     new.delete()
                     new = None
             else:
