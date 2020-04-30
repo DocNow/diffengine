@@ -347,6 +347,7 @@ class TwitterHandlerTest(TestCase):
         except AchiveUrlNotFoundError:
             self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")
 
+    @patch("diffengine.TwitterHandler.tweet_thread")
     def test_create_thread_if_old_entry_has_no_related_tweet(self, mocked_tweet_thread):
 
         entry = MagicMock()
