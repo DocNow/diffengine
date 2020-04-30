@@ -26,7 +26,12 @@ from diffengine import (
     UA,
     TwitterHandler,
 )
-from diffengine.exceptions import TwitterConfigError
+from exceptions.twitter import (
+    ConfigNotFoundError,
+    TokenNotFoundError,
+    AlreadyTweetedError,
+    AchiveUrlNotFoundError,
+)
 
 if os.path.isdir("test"):
     shutil.rmtree("test")
@@ -295,17 +300,61 @@ class EntryTest(TestCase):
         twitter.tweet_diff.assert_called_once()
 
 
-class TweetTest(TestCase):
+class TwitterHandlerTest(TestCase):
     def test_raises_if_no_config_set(self):
-        self.assertRaises(TwitterConfigError, TwitterHandler, None, None)
-        self.assertRaises(TwitterConfigError, TwitterHandler, "myConsumerKey", None)
-        self.assertRaises(TwitterConfigError, TwitterHandler, None, "myConsumerSecret")
+        self.assertRaises(ConfigNotFoundError, TwitterHandler, None, None)
+        self.assertRaises(ConfigNotFoundError, TwitterHandler, "myConsumerKey", None)
+        self.assertRaises(ConfigNotFoundError, TwitterHandler, None, "myConsumerSecret")
 
         try:
             TwitterHandler("myConsumerKey", "myConsumerSecret")
-        except TwitterConfigError:
-            self.fail("Twitter.__init__ raised TwitterConfigError unexpectedly!")
+        except ConfigNotFoundError:
+            self.fail("Twitter.__init__ raised ConfigNotFoundError unexpectedly!")
 
-    def test_do_nothing_if(self):
-        config = {"twitter": {"consumer_key": "test", "consumer_secret": "test"}}
-        twitter = TwitterHandler(config)
+    def test_raises_if_no_token_provided(self):
+        diff = MagicMock()
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        self.assertRaises(TokenNotFoundError, twitter.tweet_diff, diff, None)
+
+    def test_raises_if_already_tweeted(self):
+        diff = MagicMock()
+        type(diff).tweeted = PropertyMock(return_value=True)
+
+        token = {
+            "access_token": "myAccessToken",
+            "access_token_secret": "myAccessTokenSecret",
+        }
+
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        self.assertRaises(AlreadyTweetedError, twitter.tweet_diff, diff, token)
+
+    def test_raises_if_not_all_archive_urls_are_present(self):
+
+        old = MagicMock()
+        type(old).archive_url = None
+
+        new = MagicMock()
+        type(new).archive_url = None
+
+        diff = MagicMock()
+        type(diff).tweeted = PropertyMock(return_value=False)
+        type(diff).old = old
+        type(diff).new = new
+
+        token = {
+            "access_token": "myAccessToken",
+            "access_token_secret": "myAccessTokenSecret",
+        }
+
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        self.assertRaises(AchiveUrlNotFoundError, twitter.tweet_diff, diff, token)
+
+        type(old).archive_url = PropertyMock(return_value="http://test.url/old")
+        self.assertRaises(AchiveUrlNotFoundError, twitter.tweet_diff, diff, token)
+
+        type(new).archive_url = PropertyMock(return_value="http://test.url/new")
+
+        try:
+            twitter.tweet_diff(diff, token)
+        except AchiveUrlNotFoundError:
+            self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")

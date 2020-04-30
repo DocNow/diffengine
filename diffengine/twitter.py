@@ -3,16 +3,12 @@ import tweepy
 
 from datetime import datetime
 
-from diffengine.exceptions import TwitterConfigError
-
-
-def build_text(diff):
-    text = diff.new.title
-    if len(text) >= 225:
-        text = text[0:225] + "…"
-    text += " " + diff.url
-
-    return text
+from exceptions.twitter import (
+    AlreadyTweetedError,
+    ConfigNotFoundError,
+    TokenNotFoundError,
+    AchiveUrlNotFoundError,
+)
 
 
 class TwitterHandler:
@@ -21,7 +17,7 @@ class TwitterHandler:
 
     def __init__(self, consumer_key, consumer_secret):
         if not consumer_key or not consumer_secret:
-            raise TwitterConfigError()
+            raise ConfigNotFoundError()
 
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
@@ -33,6 +29,14 @@ class TwitterHandler:
     def api(self, token):
         self.auth.set_access_token(token["access_token"], token["access_token_secret"])
         return tweepy.API(self.auth)
+
+    def build_text(diff):
+        text = diff.new.title
+        if len(text) >= 225:
+            text = text[0:225] + "…"
+        text += " " + diff.url
+
+        return text
 
     def tweet_thread(self, entry, first_version, token):
         if not token:
@@ -52,19 +56,16 @@ class TwitterHandler:
         first_version.save()
         return status.id_str
 
-    def tweet_diff(self, diff, token):
+    def tweet_diff(self, diff, token=None):
         if not token:
-            logging.debug("access token/secret not set up for feed")
-            return
+            raise TokenNotFoundError()
         elif diff.tweeted:
-            logging.warning("diff %s has already been tweeted", diff.id)
-            return
+            raise AlreadyTweetedError(diff.id)
         elif not (diff.old.archive_url and diff.new.archive_url):
-            logging.warning("not tweeting without archive urls")
-            return
+            raise AchiveUrlNotFoundError()
 
         twitter = self.api(token)
-        text = build_text(diff)
+        text = self.build_text(diff)
 
         # Check if the thread exists
         thread_status_id_str = None

@@ -35,7 +35,8 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
 
-from diffengine.exceptions import UnknownWebdriverError, TwitterConfigError
+from exceptions.webdriver import UnknownWebdriverError
+from exceptions.twitter import ConfigNotFoundError, TwitterError
 from diffengine.twitter import TwitterHandler
 
 home = None
@@ -529,7 +530,7 @@ def main():
             twitter_handler = TwitterHandler(
                 config["consumer_key"], config["consumer_secret"]
             )
-        except TwitterConfigError as e:
+        except ConfigNotFoundError as e:
             twitter_handler = None
             logging.warning("error with Twitter handler. Reason", str(e))
 
@@ -563,9 +564,10 @@ def process_entry(entry, token=None, twitter=None):
             result["new"] = 1
             if version.diff and token is not None:
                 twitter.tweet_diff(version.diff, token)
+        except TwitterError as e:
+            logging.warning("error occurred while trying to tweet", e)
         except Exception as e:
             logging.error("unable to get latest", e)
-            return result
     return result
 
 
