@@ -517,6 +517,18 @@ def main():
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
 
+    try:
+        twitter_config = config.get("twitter")
+        twitter_handler = TwitterHandler(
+            twitter_config["consumer_key"], twitter_config["consumer_secret"]
+        )
+    except ConfigNotFoundError as e:
+        twitter_handler = None
+        logging.warning("error when creating Twitter Handler. Reason", str(e))
+    except KeyError as e:
+        twitter_handler = None
+        logging.warning("the twitter keys are not present in config. Reason", str(e))
+
     checked = skipped = new = 0
 
     for f in config.get("feeds", []):
@@ -526,13 +538,6 @@ def main():
 
         # get latest feed entries
         feed.get_latest()
-        try:
-            twitter_handler = TwitterHandler(
-                config["consumer_key"], config["consumer_secret"]
-            )
-        except ConfigNotFoundError as e:
-            twitter_handler = None
-            logging.warning("error with Twitter handler. Reason", str(e))
 
         # get latest content for each entry
         for entry in feed.entries:
