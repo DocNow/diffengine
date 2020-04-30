@@ -8,6 +8,7 @@ from exceptions.twitter import (
     ConfigNotFoundError,
     TokenNotFoundError,
     AchiveUrlNotFoundError,
+    UpdateStatusError,
 )
 
 
@@ -37,23 +38,19 @@ class TwitterHandler:
         text += " " + diff.url
         return text
 
-    def tweet_thread(self, entry, first_version, token):
-        if not token:
-            logging.debug("access token/secret not set up for feed")
-            return
-        elif entry.tweet_status_id_str:
-            logging.warning("entry %s has already been tweeted", entry.id)
-            return
+    def create_thread(self, entry, first_version, token):
+        try:
+            twitter = self.api(token)
+            status = twitter.update_status(entry.url)
+            entry.tweet_status_id_str = status.id_str
+            entry.save()
 
-        twitter = self.api(token)
-        status = twitter.update_status(entry.url)
-        entry.tweet_status_id_str = status.id_str
-        entry.save()
-
-        # Save the entry status_id inside the first entryVersion
-        first_version.tweet_status_id_str = status.id_str
-        first_version.save()
-        return status.id_str
+            # Save the entry status_id inside the first entryVersion
+            first_version.tweet_status_id_str = status.id_str
+            first_version.save()
+            return status.id_str
+        except Exception as e:
+            raise UpdateStatusError(entry)
 
     def tweet_diff(self, diff, token=None):
         if not token:
@@ -70,17 +67,15 @@ class TwitterHandler:
         thread_status_id_str = None
         if diff.old.entry.tweet_status_id_str is None:
             try:
-                thread_status_id_str = self.tweet_thread(
+                thread_status_id_str = self.create_thread(
                     diff.old.entry, diff.old, token
                 )
                 logging.info(
                     "created thread https://twitter/%s/status/%s"
                     % (self.auth.get_username(), thread_status_id_str)
                 )
-            except Exception as e:
-                logging.error(
-                    "could not create thread on entry %s" % diff.old.entry.url, e
-                )
+            except UpdateStatusError as e:
+                logging.error(str(e))
         else:
             thread_status_id_str = diff.old.tweet_status_id_str
 

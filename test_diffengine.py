@@ -31,6 +31,7 @@ from exceptions.twitter import (
     TokenNotFoundError,
     AlreadyTweetedError,
     AchiveUrlNotFoundError,
+    UpdateStatusError,
 )
 
 if os.path.isdir("test"):
@@ -447,6 +448,23 @@ class TwitterHandlerTest(TestCase):
         mocked_get_username.assert_not_called()
         diff.new.save.assert_not_called()
         diff.save.assert_not_called()
+
+    @patch("tweepy.API.update_status", side_effect=Exception)
+    def test_create_thread_failure(self, mocked_update_status):
+        entry = MagicMock()
+        version = MagicMock()
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        self.assertRaises(
+            UpdateStatusError,
+            twitter.create_thread,
+            entry,
+            version,
+            {
+                "access_token": "myAccessToken",
+                "access_token_secret": "myAccessTokenSecret",
+            },
+        )
+        mocked_update_status.assert_called_once()
 
 
 def get_mocked_diff(with_archive_urls=True):

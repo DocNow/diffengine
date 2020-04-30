@@ -24,3 +24,11 @@ class AlreadyTweetedError(TwitterError):
 class AchiveUrlNotFoundError(TwitterError):
     def __init__(self):
         self.message = "not tweeting without archive urls"
+
+
+class UpdateStatusError(TwitterError):
+    def __init__(self, entry):
+        self.message = "could not create thread on entry id %s, url %s" % (
+            entry.id,
+            entry.url,
+        )
