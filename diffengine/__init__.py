@@ -566,9 +566,10 @@ def process_entry(entry, token=None, twitter=None):
         result["checked"] = 1
         try:
             version = entry.get_latest()
-            result["new"] = 1
-            if version.diff and token is not None:
-                twitter.tweet_diff(version.diff, token)
+            if version:
+                result["new"] = 1
+                if version.diff and token is not None:
+                    twitter.tweet_diff(version.diff, token)
         except TwitterError as e:
             logging.warning("error occurred while trying to tweet", e)
         except Exception as e:

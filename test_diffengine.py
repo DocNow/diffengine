@@ -236,6 +236,24 @@ class EntryTest(TestCase):
         assert result["checked"] == 1
         assert result["new"] == 0
 
+    def test_get_none_if_no_new_version(self):
+        # Prepare
+        twitter = MagicMock()
+        twitter.tweet_diff = MagicMock()
+
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=True)
+        entry.get_latest = MagicMock(return_value=None)
+
+        # Test
+        result = process_entry(entry, None, twitter)
+
+        # Assert
+        entry.get_latest.assert_called_once()
+        assert result["checked"] == 1
+        assert result["new"] == 0
+        twitter.tweet_diff.assert_not_called()
+
     def test_do_not_tweet_if_entry_has_no_diff(self):
         # Prepare
         twitter = MagicMock()
