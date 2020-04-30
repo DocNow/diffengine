@@ -30,12 +30,11 @@ class TwitterHandler:
         self.auth.set_access_token(token["access_token"], token["access_token_secret"])
         return tweepy.API(self.auth)
 
-    def build_text(diff):
+    def build_text(self, diff):
         text = diff.new.title
         if len(text) >= 225:
             text = text[0:225] + "…"
         text += " " + diff.url
-
         return text
 
     def tweet_thread(self, entry, first_version, token):

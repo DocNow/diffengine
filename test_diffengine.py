@@ -9,7 +9,7 @@ import pytest
 import shutil
 
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from unittest.mock import PropertyMock
 
 from diffengine import (
@@ -329,18 +329,7 @@ class TwitterHandlerTest(TestCase):
         self.assertRaises(AlreadyTweetedError, twitter.tweet_diff, diff, token)
 
     def test_raises_if_not_all_archive_urls_are_present(self):
-
-        old = MagicMock()
-        type(old).archive_url = None
-
-        new = MagicMock()
-        type(new).archive_url = None
-
-        diff = MagicMock()
-        type(diff).tweeted = PropertyMock(return_value=False)
-        type(diff).old = old
-        type(diff).new = new
-
+        diff = get_mocked_diff(False)
         token = {
             "access_token": "myAccessToken",
             "access_token_secret": "myAccessTokenSecret",
@@ -349,12 +338,70 @@ class TwitterHandlerTest(TestCase):
         twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
         self.assertRaises(AchiveUrlNotFoundError, twitter.tweet_diff, diff, token)
 
-        type(old).archive_url = PropertyMock(return_value="http://test.url/old")
+        type(diff.old).archive_url = PropertyMock(return_value="http://test.url/old")
         self.assertRaises(AchiveUrlNotFoundError, twitter.tweet_diff, diff, token)
 
-        type(new).archive_url = PropertyMock(return_value="http://test.url/new")
-
+        type(diff.new).archive_url = PropertyMock(return_value="http://test.url/new")
         try:
             twitter.tweet_diff(diff, token)
         except AchiveUrlNotFoundError:
             self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")
+
+    @patch("diffengine.TwitterHandler.tweet_thread")
+    def test_create_thread_if_old_entry_has_no_related_tweet(self, mocked_tweet_thread):
+
+        entry = MagicMock()
+        type(entry).tweet_status_id_str = PropertyMock(return_value=None)
+
+        diff = get_mocked_diff()
+        type(diff.old).entry = entry
+
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        twitter.tweet_diff(
+            diff,
+            {
+                "access_token": "myAccessToken",
+                "access_token_secret": "myAccessTokenSecret",
+            },
+        )
+
+        mocked_tweet_thread.assert_called_once()
+
+    @patch("diffengine.TwitterHandler.tweet_thread")
+    def test_update_thread_if_old_entry_has_related_tweet(self, mocked_tweet_thread):
+
+        entry = MagicMock()
+        type(entry).tweet_status_id_str = PropertyMock(return_value="1234567890")
+
+        diff = get_mocked_diff()
+        type(diff.old).entry = entry
+
+        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
+        twitter.tweet_diff(
+            diff,
+            {
+                "access_token": "myAccessToken",
+                "access_token_secret": "myAccessTokenSecret",
+            },
+        )
+
+        mocked_tweet_thread.assert_not_called()
+
+
+def get_mocked_diff(with_archive_urls=True):
+    old = MagicMock()
+    type(old).archive_url = None
+
+    new = MagicMock()
+    type(new).archive_url = None
+
+    diff = MagicMock()
+    type(diff).tweeted = PropertyMock(return_value=False)
+    type(diff).old = old
+    type(diff).new = new
+
+    if with_archive_urls:
+        type(old).archive_url = PropertyMock(return_value="http://test.url/old")
+        type(new).archive_url = PropertyMock(return_value="http://test.url/new")
+
+    return diff
