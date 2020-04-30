@@ -99,6 +99,7 @@ class Entry(BaseModel):
     url = CharField()
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
+    tweet_status_id_str = CharField()
 
     @property
     def feeds(self):
@@ -224,6 +225,7 @@ class EntryVersion(BaseModel):
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, backref="versions")
+    tweet_status_id_str = CharField()
 
     @property
     def diff(self):
@@ -569,9 +571,12 @@ def process_entry(entry, token=None, twitter=None):
             if version:
                 result["new"] = 1
                 if version.diff and token is not None:
-                    twitter.tweet_diff(version.diff, token)
-        except TwitterError as e:
-            logging.warning("error occurred while trying to tweet", e)
+                    try:
+                        twitter.tweet_diff(version.diff, token)
+                    except TwitterError as e:
+                        logging.warning("error occurred while trying to tweet", e)
+                    except Exception as e:
+                        logging.error("unknown error when tweeting diff", e)
         except Exception as e:
             logging.error("unable to get latest", e)
     return result
