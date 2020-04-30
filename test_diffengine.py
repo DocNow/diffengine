@@ -348,8 +348,11 @@ class TwitterHandlerTest(TestCase):
         except AchiveUrlNotFoundError:
             self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")
 
-    @patch("diffengine.TwitterHandler.tweet_thread")
-    def test_create_thread_if_old_entry_has_no_related_tweet(self, mocked_tweet_thread):
+    @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
+    @patch("diffengine.TwitterHandler.create_thread")
+    def test_create_thread_if_old_entry_has_no_related_tweet(
+        self, mocked_create_thread, mocked_get_username
+    ):
 
         entry = MagicMock()
         type(entry).tweet_status_id_str = PropertyMock(return_value=None)
@@ -366,10 +369,14 @@ class TwitterHandlerTest(TestCase):
             },
         )
 
-        mocked_tweet_thread.assert_called_once()
+        mocked_create_thread.assert_called_once()
+        mocked_get_username.assert_called_once()
 
-    @patch("diffengine.TwitterHandler.tweet_thread")
-    def test_update_thread_if_old_entry_has_related_tweet(self, mocked_tweet_thread):
+    @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
+    @patch("diffengine.TwitterHandler.create_thread")
+    def test_update_thread_if_old_entry_has_related_tweet(
+        self, mocked_create_thread, mocked_get_username
+    ):
 
         entry = MagicMock()
         type(entry).tweet_status_id_str = PropertyMock(return_value="1234567890")
@@ -386,7 +393,8 @@ class TwitterHandlerTest(TestCase):
             },
         )
 
-        mocked_tweet_thread.assert_not_called()
+        mocked_create_thread.assert_not_called()
+        mocked_get_username.assert_called_once()
 
     class MockedStatus(MagicMock):
         id_str = PropertyMock(return_value="1234567890")
