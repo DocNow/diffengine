@@ -28,14 +28,16 @@ import unicodedata
 
 from peewee import *
 from playhouse.migrate import SqliteMigrator, migrate
-from datetime import datetime, timedelta
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
 
-from diffengine.exceptions import UnknownWebdriverError
+from exceptions.webdriver import UnknownWebdriverError
+from exceptions.twitter import ConfigNotFoundError, TwitterError
+from diffengine.twitter import TwitterHandler
 
 home = None
 config = {}
@@ -97,6 +99,7 @@ class Entry(BaseModel):
     url = CharField()
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
+    tweet_status_id_str = CharField(null=True)
 
     @property
     def feeds(self):
@@ -195,7 +198,12 @@ class Entry(BaseModel):
                 logging.debug("found new version %s", old.entry.url)
                 diff = Diff.create(old=old, new=new)
                 if not diff.generate():
-                    logging.warn("html diff showed no changes: %s", self.url)
+                    logging.warn(
+                        "html diff showed no changes between versions #%s and #%s: %s",
+                        old.id,
+                        new.id,
+                        self.url,
+                    )
                     new.delete()
                     new = None
             else:
@@ -222,6 +230,7 @@ class EntryVersion(BaseModel):
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, backref="versions")
+    tweet_status_id_str = CharField(null=True)
 
     @property
     def diff(self):
@@ -306,6 +315,7 @@ class Diff(BaseModel):
             snap(self.old.archive_url), snap(self.new.archive_url), self.old.url
         )
 
+    # TODO: configurable option for deleting the diffs after some time (1 week?)
     def generate(self):
         if self._generate_diff_html():
             self._generate_diff_images()
@@ -500,41 +510,6 @@ def setup_browser(engine="geckodriver", executable_path=None, binary_location=""
         return geckodriver_browser()
 
 
-def tweet_diff(diff, token):
-    if "twitter" not in config:
-        logging.debug("twitter not configured")
-        return
-    elif not token:
-        logging.debug("access token/secret not set up for feed")
-        return
-    elif diff.tweeted:
-        logging.warn("diff %s has already been tweeted", diff.id)
-        return
-    elif not (diff.old.archive_url and diff.new.archive_url):
-        logging.warn("not tweeting without archive urls")
-        return
-
-    t = config["twitter"]
-    auth = tweepy.OAuthHandler(t["consumer_key"], t["consumer_secret"])
-    auth.secure = True
-    auth.set_access_token(token["access_token"], token["access_token_secret"])
-    twitter = tweepy.API(auth)
-
-    status = diff.new.title
-    if len(status) >= 225:
-        status = status[0:225] + "…"
-
-    status += " " + diff.url
-
-    try:
-        twitter.update_with_media(diff.thumbnail_path, status)
-        diff.tweeted = datetime.utcnow()
-        logging.info("tweeted %s", status)
-        diff.save()
-    except Exception as e:
-        logging.error("unable to tweet: %s", e)
-
-
 def init(new_home, prompt=True):
     global home, browser
     home = new_home
@@ -563,6 +538,18 @@ def main():
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
 
+    try:
+        twitter_config = config.get("twitter")
+        twitter_handler = TwitterHandler(
+            twitter_config["consumer_key"], twitter_config["consumer_secret"]
+        )
+    except ConfigNotFoundError as e:
+        twitter_handler = None
+        logging.warning("error when creating Twitter Handler. Reason", str(e))
+    except KeyError as e:
+        twitter_handler = None
+        logging.warning("the twitter keys are not present in config. Reason", str(e))
+
     checked = skipped = new = 0
 
     for f in config.get("feeds", []):
@@ -575,19 +562,10 @@ def main():
 
         # get latest content for each entry
         for entry in feed.entries:
-            if not entry.stale:
-                skipped += 1
-                continue
-            checked += 1
-            try:
-                version = entry.get_latest()
-            except Exception as e:
-                logging.error("unable to get latest", e)
-                continue
-            if version:
-                new += 1
-            if version and version.diff and "twitter" in f:
-                tweet_diff(version.diff, f["twitter"])
+            result = process_entry(entry, f["twitter"], twitter_handler)
+            skipped += result["skipped"]
+            checked += result["checked"]
+            new += result["new"]
 
     elapsed = datetime.utcnow() - start_time
     logging.info(
@@ -599,6 +577,28 @@ def main():
     )
 
     browser.quit()
+
+
+def process_entry(entry, token=None, twitter=None):
+    result = {"skipped": 0, "checked": 0, "new": 0}
+    if not entry.stale:
+        result["skipped"] = 1
+    else:
+        result["checked"] = 1
+        try:
+            version = entry.get_latest()
+            if version:
+                result["new"] = 1
+                if version.diff and token is not None:
+                    try:
+                        twitter.tweet_diff(version.diff, token)
+                    except TwitterError as e:
+                        logging.warning("error occurred while trying to tweet", e)
+                    except Exception as e:
+                        logging.error("unknown error when tweeting diff", e)
+        except Exception as e:
+            logging.error("unable to get latest", e)
+    return result
 
 
 def _dt(d):
