@@ -32,7 +32,7 @@ that can be used for research purposes.
 
 1. install [GeckoDriver]
 1. install [Python 3]
-1. `pip3 install --process-dependency-links diffengine`
+1. `pip3 install diffengine`
 
 ## Run
 

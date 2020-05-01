@@ -8,8 +8,8 @@ pyyaml>=5.1
 tweepy
 requests
 selenium
+htmldiff2
 feedparser
 readability-lxml
-https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2
 envyaml>=0.1912
 pre-commit==2.3.0

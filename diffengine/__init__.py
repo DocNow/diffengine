@@ -18,9 +18,9 @@ import shutil
 import tweepy
 import logging
 import argparse
-import htmldiff
 import requests
 import selenium
+import htmldiff2
 import feedparser
 import subprocess
 import readability
@@ -328,7 +328,7 @@ class Diff(BaseModel):
             return
         tmpl_path = os.path.join(os.path.dirname(__file__), "diff.html")
         logging.debug("creating html diff: %s", self.html_path)
-        diff = htmldiff.render_html_diff(self.old.html, self.new.html)
+        diff = htmldiff2.render_html_diff(self.old.html, self.new.html)
         if "<ins>" not in diff and "<del>" not in diff:
             return False
         tmpl = jinja2.Template(codecs.open(tmpl_path, "r", "utf8").read())

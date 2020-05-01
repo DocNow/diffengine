@@ -12,12 +12,6 @@ reqs = open("requirements.txt").read().split()
 with open("README.md") as f:
     long_description = f.read()
 
-# hack until htmldiff is updated to work with python3 on pypi
-htmldiff = "https://github.com/edsu/htmldiff/tarball/master#egg=htmldiff-0.2"
-reqs.remove(htmldiff)
-reqs.append("htmldiff==0.2")
-deps = [htmldiff]
-
 if __name__ == "__main__":
     setup(
         name="diffengine",
@@ -29,7 +23,6 @@ if __name__ == "__main__":
         long_description=long_description,
         long_description_content_type="text/markdown",
         install_requires=reqs,
-        dependency_links=deps,
         setup_data={"diffengine": ["diffengine/diff.html"]},
         setup_requires=["pytest-runner"],
         tests_require=["pytest"],
