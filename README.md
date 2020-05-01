@@ -237,6 +237,7 @@ By default, the script will log everyhintg to `./diffengine.log`.
 Anyway, you can disable the file logger and/or enable the console logger as well.
 You can modify the log filename, too.
 
+If no present, the default values will be the following ones.
 ```yaml
 log: diffengine.log
 logger:
