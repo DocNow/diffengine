@@ -111,7 +111,7 @@ Then you will configure a cron entry for each account:
 
 If there are multiple feeds for an account, you can setup the `config.yml` like so:
 
-```yml
+```yaml
 - name: The Globe and Mail - Report on Business
   twitter:
     access_token: ACCESS_TOKEN
@@ -138,7 +138,7 @@ The configuration file has support for [environment variables](https://medium.co
 
 For instance, say you want to keep your Twitter credentials safe. You'd keep a reference to it in the `config.yaml` this way:
 
-```yml
+```yaml
 twitter:
   consumer_key: "${MY_CONSUMER_KEY_ENV_VAR}"
   consumer_secret: "${MY_CONSUMER_SECRET_ENV_VAR}"
@@ -176,7 +176,7 @@ zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
 Then you would use the `ACCESS_TOKEN` and the `ACCESS_TOKEN_SECRET` inside the config like this
 
-```shell script
+```yaml
 feeds:
 - name: My new feed
   url: http://www.mynewfeed.com/feed/
@@ -190,7 +190,7 @@ feeds:
 Diffengine has support for `geckodriver` and `chromedriver`.
 
 You can configure this in the `config.yaml`. The keys are the following ones.
-```yml
+```yaml
 webdriver:
   engine:
   executable_path:
@@ -201,7 +201,7 @@ webdriver:
 
 The `geckodriver` is properly defined by default. In case you need to configure it, then:
 
-```yml
+```yaml
 webdriver:
   engine: "geckodriver"
   executable_path: null (this config has no use with geckodriver)
@@ -212,7 +212,7 @@ webdriver:
 
 If you want to use `chromedriver` locally, then you should leave the config this way:
 
-```yml
+```yaml
 webdriver:
   engine: "chromedriver"
   executable_path: null ("chromedriver" by default)
@@ -224,13 +224,27 @@ webdriver:
 If you use Heroku, then you have to add the [Heroku chromedriver buildpack](https://github.com/heroku/heroku-buildpack-chromedriver).
 And then use the environment vars provided automatically by it.
 
-```yml
+```yaml
 webdriver:
   engine: "chromedriver"
   executable_path: "${CHROMEDRIVER_PATH}"
   binary_location: "${GOOGLE_CHROME_BIN}"
 ```
 
+### Configuring the loggers
+
+By default, the script will log everyhintg to `./diffengine.log`.
+Anyway, you can disable the file logger and/or enable the console logger as well.
+You can modify the log filename, too.
+
+```yaml
+log: diffengine.log
+logger:
+  file: true
+  console : false
+```
+
+Logging to the console could be useful to see what's happening if the app lives in services like Heroku.
 
 ## Develop
 
