@@ -350,16 +350,27 @@ class Diff(BaseModel):
         browser.save_screenshot(self.thumbnail_path)
 
 
-def setup_logging():
-    path = config.get("log", home_path("diffengine.log"))
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        filename=path,
-        filemode="a",
-    )
-    logging.getLogger("readability.readability").setLevel(logging.WARNING)
-    logging.getLogger("tweepy.binder").setLevel(logging.WARNING)
+def setup_logging(log_file=True, log_console=False):
+    # TODO. Configurable verbosity
+    log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_formatter = logging.Formatter(log_format)
+
+    handlers = []
+    if log_file:
+        filename = config.get("log", home_path("diffengine.log"))
+        file_handler = logging.FileHandler(filename=filename, mode="a")
+        file_handler.setFormatter(log_formatter)
+        handlers.append(file_handler)
+
+    if log_console:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(log_formatter)
+        handlers.append(console_handler)
+
+    if handlers:
+        logging.basicConfig(level=logging.INFO, format=log_format, handlers=handlers)
+        logging.getLogger("readability.readability").setLevel(logging.WARNING)
+        logging.getLogger("tweepy.binder").setLevel(logging.WARNING)
 
 
 def load_config(prompt=True):
@@ -534,7 +545,9 @@ def init(new_home, prompt=True):
         executable_path = config.get("webdriver.executable_path")
         binary_location = config.get("webdriver.binary_location")
         browser = setup_browser(engine, executable_path, binary_location)
-        setup_logging()
+        setup_logging(
+            config.get("logger.file", True), config.get("logger.console", False)
+        )
         setup_db()
     except RuntimeError as e:
         logging.error("Could not finish the setup", e)
