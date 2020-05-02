@@ -57,9 +57,9 @@ class TwitterHandler:
         if not token:
             raise TokenNotFoundError()
         elif diff.tweeted:
-            raise AlreadyTweetedError(diff.id)
+            raise AlreadyTweetedError(diff)
         elif not (diff.old.archive_url and diff.new.archive_url):
-            raise AchiveUrlNotFoundError()
+            raise AchiveUrlNotFoundError(diff)
 
         twitter = self.api(token)
         text = build_text(diff, lang)

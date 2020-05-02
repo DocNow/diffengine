@@ -17,13 +17,13 @@ class TokenNotFoundError(TwitterError):
 
 
 class AlreadyTweetedError(TwitterError):
-    def __init__(self, diff_id):
-        self.message = "diff %s has already been tweeted" % diff_id
+    def __init__(self, diff):
+        self.message = "diff %s has already been tweeted" % diff.id
 
 
 class AchiveUrlNotFoundError(TwitterError):
-    def __init__(self):
-        self.message = "not tweeting without archive urls"
+    def __init__(self, diff):
+        self.message = "not tweeting without archive urls for diff %s" % diff.id
 
 
 class UpdateStatusError(TwitterError):
