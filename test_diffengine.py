@@ -27,6 +27,7 @@ from diffengine import (
     UA,
     TwitterHandler,
 )
+from diffengine.text_builder import build_text
 from exceptions.twitter import (
     ConfigNotFoundError,
     TokenNotFoundError,
@@ -524,3 +525,64 @@ def get_mocked_diff(with_archive_urls=True):
         type(new).archive_url = PropertyMock(return_value="http://test.url/new")
 
     return diff
+
+
+class TextBuilderTest(TestCase):
+    @patch("logging.warning")
+    @patch("diffengine.text_builder.build_with_lang")
+    @patch("diffengine.text_builder.build_with_default_content")
+    def test_build_with_default_content_when_no_lang_given(
+        self, mocked_build_with_default_content, mocked_build_from_lang, mocked_warning
+    ):
+        diff = get_mocked_diff()
+        type(diff.new).title = PropertyMock(return_value="Test")
+        type(diff).url = PropertyMock(return_value="https://this.is/a-test")
+
+        build_text(diff)
+
+        mocked_warning.assert_not_called()
+        mocked_build_with_default_content.assert_called_once()
+        mocked_build_from_lang.assert_not_called()
+
+    @patch("logging.warning")
+    @patch("diffengine.text_builder.build_with_lang")
+    @patch("diffengine.text_builder.build_with_default_content")
+    def test_build_with_default_content_when_lang_is_incomplete(
+        self, mocked_build_with_default_content, mocked_build_from_lang, mocked_warning
+    ):
+        diff = get_mocked_diff()
+        type(diff.new).title = PropertyMock(return_value="Test")
+        type(diff).url = PropertyMock(return_value="https://this.is/a-test")
+
+        lang = {
+            "change_in": "change in",
+            "the_url": "the URL",
+            "the_title": "the title",
+        }
+        build_text(diff, lang)
+
+        mocked_warning.assert_called_once()
+        mocked_build_with_default_content.assert_called_once()
+        mocked_build_from_lang.assert_not_called()
+
+    @patch("logging.warning")
+    @patch("diffengine.text_builder.build_with_lang")
+    @patch("diffengine.text_builder.build_with_default_content")
+    def test_build_with_lang_when_lang_given(
+        self, mocked_build_with_default_content, mocked_build_from_lang, mocked_warning
+    ):
+        diff = get_mocked_diff()
+        type(diff.new).title = PropertyMock(return_value="Test")
+        type(diff).url = PropertyMock(return_value="https://this.is/a-test")
+
+        lang = {
+            "change_in": "change in",
+            "the_url": "the URL",
+            "the_title": "the title",
+            "the_summary": "the summary",
+        }
+        build_text(diff, lang)
+
+        mocked_warning.assert_not_called()
+        mocked_build_with_default_content.assert_not_called()
+        mocked_build_from_lang.assert_called_once()
