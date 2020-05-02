@@ -75,7 +75,7 @@ class Feed(BaseModel):
             resp = _get(self.url)
             feed = feedparser.parse(resp.text)
         except Exception as e:
-            logging.error("unable to fetch feed %s: %s", self.url, e)
+            logging.error("unable to fetch feed %s: %s", self.url, str(e))
             return 0
         count = 0
         for e in feed.entries:
@@ -156,7 +156,7 @@ class Entry(BaseModel):
         try:
             resp = _get(self.url)
         except Exception as e:
-            logging.error("unable to fetch %s: %s", self.url, e)
+            logging.error("unable to fetch %s: %s", self.url, str(e))
             return None
 
         if resp.status_code != 200:
@@ -278,7 +278,9 @@ class EntryVersion(BaseModel):
                 )
 
         except Exception as e:
-            logging.error("unexpected archive.org response for %s: %s", save_url, e)
+            logging.error(
+                "unexpected archive.org response for %s: %s", save_url, str(e)
+            )
         return None
 
 
@@ -525,7 +527,7 @@ def init(new_home, prompt=True):
         )
         setup_db()
     except RuntimeError as e:
-        logging.error("Could not finish the setup", e)
+        logging.error("Could not finish the setup", str(e))
 
 
 def main():
@@ -594,11 +596,11 @@ def process_entry(entry, token=None, twitter_handler=None, lang={}):
                     try:
                         twitter_handler.tweet_diff(version.diff, token, lang)
                     except TwitterError as e:
-                        logging.warning("error occurred while trying to tweet", e)
+                        logging.warning("error occurred while trying to tweet", str(e))
                     except Exception as e:
-                        logging.error("unknown error when tweeting diff", e)
+                        logging.error("unknown error when tweeting diff", str(e))
         except Exception as e:
-            logging.error("unable to get latest", e)
+            logging.error("unable to get latest", str(e))
     return result
 
 
