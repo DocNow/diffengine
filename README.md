@@ -88,6 +88,29 @@ Logs can be found in `diffengine.log` in the storage directory, for example
 Checkout [Ryan Baumann's "diffengine" Twitter list] for a list of known
 diffengine Twitter accounts that are out there.
 
+## Tweeting text options
+
+By default, the tweeted diff will include the article's title and the archive diff url, [like this](https://twitter.com/mp_diff/status/1255973684994625539).
+
+You change this by tweeting what's changed: the url, the title and/or the summary. For doing so, you need to specify **all** the following `lang` keys:
+
+```yaml
+lang:
+  change_in: "Change in"
+  the_url: "the URL"
+  the_title: "the title"
+  and: "and"
+  the_summary: "the summary"
+```
+
+Only if all the keys are defined, the tweet will include what's changed on its content, followed by the `diff.url`. Some examples:
+
+- "Change in the title"
+- "Change in the summary"
+- "Change in the title and the summary"
+
+And so on with all the possible combinations between url, title and summary
+
 ## Multiple Accounts & Feed Implementation Example
 
 If you are setting multiple accounts, and multiple feeds if may be helpful to setup a
@@ -157,7 +180,7 @@ Done! You can use diffengine as usual and keep your credentials safe.
 
 You can use the following command for adding Twitter accounts to the config file.
 
-```shell script
+```shell
 $ diffengine --add
 
 Log in to https://twitter.com as the user you want to tweet as and hit enter.
