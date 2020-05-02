@@ -149,6 +149,7 @@ class Entry(BaseModel):
         """
 
         # make sure we don't go too fast
+        # TODO: can we remove this? Why is this here?
         time.sleep(1)
 
         # fetch the current readability-ized content for the page
