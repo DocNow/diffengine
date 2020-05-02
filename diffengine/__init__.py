@@ -537,7 +537,7 @@ def main():
     init(home)
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
-    lang = config.get("lang")
+    lang = config.get("lang", {})
 
     try:
         twitter_config = config.get("twitter")
@@ -563,7 +563,7 @@ def main():
 
         # get latest content for each entry
         for entry in feed.entries:
-            result = process_entry(entry, twitter_handler, lang)
+            result = process_entry(entry, f["twitter"], twitter_handler, lang)
             skipped += result["skipped"]
             checked += result["checked"]
             new += result["new"]
@@ -580,7 +580,7 @@ def main():
     browser.quit()
 
 
-def process_entry(entry, token=None, twitter=None):
+def process_entry(entry, token=None, twitter_handler=None, lang={}):
     result = {"skipped": 0, "checked": 0, "new": 0}
     if not entry.stale:
         result["skipped"] = 1
@@ -592,7 +592,7 @@ def process_entry(entry, token=None, twitter=None):
                 result["new"] = 1
                 if version.diff and token is not None:
                     try:
-                        twitter.tweet_diff(version.diff, token)
+                        twitter_handler.tweet_diff(version.diff, token, lang)
                     except TwitterError as e:
                         logging.warning("error occurred while trying to tweet", e)
                     except Exception as e:

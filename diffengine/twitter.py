@@ -53,7 +53,7 @@ class TwitterHandler:
         except Exception as e:
             raise UpdateStatusError(entry)
 
-    def tweet_diff(self, diff, token=None, lang=None):
+    def tweet_diff(self, diff, token=None, lang={}):
         if not token:
             raise TokenNotFoundError()
         elif diff.tweeted:
