@@ -409,30 +409,6 @@ class TwitterHandlerTest(TestCase):
         mocked_get_username.assert_called()
 
     @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
-    @patch("diffengine.TwitterHandler.create_thread")
-    def test_update_thread_if_old_entry_has_related_tweet(
-        self, mocked_create_thread, mocked_get_username
-    ):
-
-        entry = MagicMock()
-        type(entry).tweet_status_id_str = PropertyMock(return_value="1234567890")
-
-        diff = get_mocked_diff()
-        type(diff.old).entry = entry
-
-        twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
-        twitter.tweet_diff(
-            diff,
-            {
-                "access_token": "myAccessToken",
-                "access_token_secret": "myAccessTokenSecret",
-            },
-        )
-
-        mocked_create_thread.assert_not_called()
-        mocked_get_username.assert_called_once()
-
-    @patch("tweepy.OAuthHandler.get_username", return_value="test_user")
     @patch("tweepy.API.update_with_media", return_value=MockedStatus)
     def test_update_thread_if_old_entry_has_related_tweet(
         self, mocked_update_with_media, mocked_get_username
