@@ -537,6 +537,7 @@ def main():
     init(home)
     start_time = datetime.utcnow()
     logging.info("starting up with home=%s", home)
+    lang = config.get("lang")
 
     try:
         twitter_config = config.get("twitter")
@@ -562,7 +563,7 @@ def main():
 
         # get latest content for each entry
         for entry in feed.entries:
-            result = process_entry(entry, f["twitter"], twitter_handler)
+            result = process_entry(entry, twitter_handler, lang)
             skipped += result["skipped"]
             checked += result["checked"]
             new += result["new"]

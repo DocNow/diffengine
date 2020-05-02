@@ -3,6 +3,7 @@ import tweepy
 
 from datetime import datetime
 
+from diffengine.text_builder import build_text
 from exceptions.twitter import (
     AlreadyTweetedError,
     ConfigNotFoundError,
@@ -52,7 +53,7 @@ class TwitterHandler:
         except Exception as e:
             raise UpdateStatusError(entry)
 
-    def tweet_diff(self, diff, token=None):
+    def tweet_diff(self, diff, token=None, lang=None):
         if not token:
             raise TokenNotFoundError()
         elif diff.tweeted:
@@ -61,7 +62,7 @@ class TwitterHandler:
             raise AchiveUrlNotFoundError()
 
         twitter = self.api(token)
-        text = self.build_text(diff)
+        text = build_text(diff, lang)
 
         # Check if the thread exists
         thread_status_id_str = None
