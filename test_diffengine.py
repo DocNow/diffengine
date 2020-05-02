@@ -538,7 +538,7 @@ class TextBuilderTest(TestCase):
         type(diff.new).title = PropertyMock(return_value="Test")
         type(diff).url = PropertyMock(return_value="https://this.is/a-test")
 
-        build_text(diff)
+        text = build_text(diff)
 
         mocked_warning.assert_not_called()
         mocked_build_with_default_content.assert_called_once()
@@ -579,6 +579,7 @@ class TextBuilderTest(TestCase):
             "change_in": "change in",
             "the_url": "the URL",
             "the_title": "the title",
+            "and": "and",
             "the_summary": "the summary",
         }
         build_text(diff, lang)
@@ -586,3 +587,92 @@ class TextBuilderTest(TestCase):
         mocked_warning.assert_not_called()
         mocked_build_with_default_content.assert_not_called()
         mocked_build_from_lang.assert_called_once()
+
+    @patch("diffengine.text_builder.build_with_lang")
+    def test_default_content_text(self, mocked_build_from_lang):
+        diff = get_mocked_diff()
+        type(diff.new).title = "Test"
+        type(diff).url = "https://this.is/a-test"
+
+        text = build_text(diff)
+
+        mocked_build_from_lang.assert_not_called()
+        self.assertEqual(text, "%s %s" % (diff.new.title, diff.url))
+
+    @patch("diffengine.text_builder.build_with_lang")
+    def test_default_content_text_when_lang_is_incomplete(self, mocked_build_from_lang):
+        diff = get_mocked_diff()
+        type(diff.new).title = "Test"
+        type(diff).url = "https://this.is/a-test"
+
+        lang = {
+            "change_in": "change in",
+            "the_url": "the URL",
+            "the_title": "the title",
+        }
+        text = build_text(diff, lang)
+
+        mocked_build_from_lang.assert_not_called()
+        self.assertEqual(text, "%s %s" % (diff.new.title, diff.url))
+
+    def test_lang_content_text(self):
+        diff = get_mocked_diff()
+        lang = {
+            "change_in": "change in",
+            "the_url": "the URL",
+            "the_title": "the title",
+            "and": "and",
+            "the_summary": "the summary",
+        }
+
+        type(diff).url_changed = True
+        type(diff).title_changed = False
+        type(diff).summary_changed = False
+        type(diff).url = "https://this.is/a-test"
+
+        text = build_text(diff, lang)
+        self.assertEqual(text, "change in the URL\n%s" % diff.url)
+
+        type(diff).url_changed = False
+        type(diff).title_changed = True
+        type(diff).summary_changed = False
+
+        text = build_text(diff, lang)
+        self.assertEqual(text, "change in the title\n%s" % diff.url)
+
+        type(diff).url_changed = False
+        type(diff).title_changed = False
+        type(diff).summary_changed = True
+
+        text = build_text(diff, lang)
+        self.assertEqual(text, "change in the summary\n%s" % diff.url)
+
+        type(diff).url_changed = True
+        type(diff).title_changed = True
+        type(diff).summary_changed = False
+
+        text = build_text(diff, lang)
+        self.assertEqual(text, "change in the URL and the title\n%s" % diff.url)
+
+        type(diff).url_changed = True
+        type(diff).title_changed = False
+        type(diff).summary_changed = True
+
+        text = build_text(diff, lang)
+        self.assertEqual(text, "change in the URL and the summary\n%s" % diff.url)
+
+        type(diff).url_changed = False
+        type(diff).title_changed = True
+        type(diff).summary_changed = True
+
+        text = build_text(diff, lang)
+        self.assertEqual(text, "change in the title and the summary\n%s" % diff.url)
+
+        type(diff).url_changed = True
+        type(diff).title_changed = True
+        type(diff).summary_changed = True
+
+        text = build_text(diff, lang)
+        self.assertEqual(
+            text, "change in the URL, the title and the summary\n%s" % diff.url
+        )

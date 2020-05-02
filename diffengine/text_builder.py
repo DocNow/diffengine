@@ -21,10 +21,14 @@ def build_text(diff, lang={}):
 
 
 def can_build_with_lang(lang):
-    return all(k in lang for k in ("change_in", "the_url", "the_title", "the_summary"))
+    return all(
+        k in lang for k in ("change_in", "the_url", "the_title", "and", "the_summary")
+    )
 
 
-def build_with_lang(lang, url_changed, title_changed, summary_changed):
+def build_with_lang(
+    lang, url_changed=False, title_changed=False, summary_changed=False
+):
     changes = []
     if url_changed:
         changes.append(lang["the_url"])
