@@ -45,7 +45,7 @@ class SendgridHandler:
         elif not (diff.old.archive_url and diff.new.archive_url):
             raise ArchiveUrlNotFoundError()
 
-        api_token = (feed_config.get("api_token", self.api_token),)
+        api_token = feed_config.get("api_token", self.api_token)
         sender = feed_config.get("sender", self.sender)
         receivers = feed_config.get("receivers", self.receivers)
         if not all([api_token, sender, receivers]):
