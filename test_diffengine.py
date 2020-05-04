@@ -26,6 +26,12 @@ from diffengine import (
     process_entry,
     UA,
     TwitterHandler,
+    SendgridHandler,
+)
+from exceptions.sendgrid import (
+    ConfigNotFoundError as SGConfigNotFoundError,
+    AlreadyEmailedError as SGAlreadyEmailedError,
+    ArchiveUrlNotFoundError as SGArchiveNotFoundError,
 )
 from diffengine.text_builder import build_text
 from exceptions.twitter import (
@@ -318,13 +324,39 @@ class EntryTest(TestCase):
 
         # Test
         token = {"access_token": "test", "access_token_secret": "test"}
-        result = process_entry(entry, token, twitter)
+        result = process_entry(entry, {"twitter": token}, twitter)
 
         # Assert
         entry.get_latest.assert_called_once()
         assert result["checked"] == 1
         assert result["new"] == 1
         twitter.tweet_diff.assert_called_once()
+
+    def test_do_mail_if_entry_has_diff(self):
+        # Prepare
+        sendgrid = MagicMock()
+        sendgrid.publish_diff = MagicMock()
+
+        version = MagicMock()
+        type(version).diff = PropertyMock(return_value=MagicMock())
+
+        entry = MagicMock()
+        type(entry).stale = PropertyMock(return_value=True)
+        entry.get_latest = MagicMock(return_value=version)
+
+        # Test
+        sendgrid_config = {
+            "api_token": "12345",
+            "sender": "test@test.test",
+            "receivers": "test@test.test",
+        }
+        result = process_entry(entry, {"sendgrid": sendgrid_config}, None, sendgrid)
+
+        # Assert
+        entry.get_latest.assert_called_once()
+        assert result["checked"] == 1
+        assert result["new"] == 1
+        sendgrid.publish_diff.assert_called_once()
 
 
 class TwitterHandlerTest(TestCase):
@@ -508,6 +540,63 @@ class TwitterHandlerTest(TestCase):
         version.save.assert_called_once()
 
 
+class SendgridHandlerTest(TestCase):
+    config = {
+        "sendgrid": {
+            "api_token": "12345",
+            "sender": "test@test.test",
+            "receivers": "test@test.test",
+        }
+    }
+
+    def setUp(self) -> None:
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self) -> None:
+        logging.disable(logging.NOTSET)
+
+    def test_raises_if_no_config_set(self):
+        diff = MagicMock()
+        type(diff).emailed = PropertyMock(return_value=False)
+        sendgrid = SendgridHandler({})
+
+        self.assertRaises(SGConfigNotFoundError, sendgrid.publish_diff, diff, {})
+        try:
+            sendgrid.publish_diff(diff, self.config["sendgrid"])
+        except SGConfigNotFoundError:
+            self.fail("sendgrid.publish_diff raised ConfigNotFoundError unexpectedly!")
+
+    def test_raises_if_already_emailed(self):
+        diff = MagicMock()
+        type(diff).emailed = PropertyMock(return_value=True)
+
+        sendgrid = SendgridHandler(self.config["sendgrid"])
+        self.assertRaises(
+            SGAlreadyEmailedError, sendgrid.publish_diff, diff, self.config["sendgrid"]
+        )
+
+    def test_raises_if_not_all_archive_urls_are_present(self):
+        diff = get_mocked_diff(False)
+
+        sendgrid = SendgridHandler(self.config["sendgrid"])
+        self.assertRaises(
+            SGArchiveNotFoundError, sendgrid.publish_diff, diff, self.config["sendgrid"]
+        )
+
+        type(diff.old).archive_url = PropertyMock(return_value="http://test.url/old")
+        self.assertRaises(
+            SGArchiveNotFoundError, sendgrid.publish_diff, diff, self.config["sendgrid"]
+        )
+
+        type(diff.new).archive_url = PropertyMock(return_value="http://test.url/new")
+        try:
+            sendgrid.publish_diff(diff, self.config["sendgrid"])
+        except SGArchiveNotFoundError:
+            self.fail(
+                "sendgrid.publish_diff raised AchiveUrlNotFoundError unexpectedly!"
+            )
+
+
 def get_mocked_diff(with_archive_urls=True):
     old = MagicMock()
     type(old).archive_url = None
@@ -517,6 +606,7 @@ def get_mocked_diff(with_archive_urls=True):
 
     diff = MagicMock()
     type(diff).tweeted = PropertyMock(return_value=False)
+    type(diff).emailed = PropertyMock(return_value=False)
     type(diff).old = old
     type(diff).new = new
 

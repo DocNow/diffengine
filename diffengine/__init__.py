@@ -38,6 +38,11 @@ from envyaml import EnvYAML
 from exceptions.webdriver import UnknownWebdriverError
 from exceptions.twitter import ConfigNotFoundError, TwitterError
 from diffengine.twitter import TwitterHandler
+from exceptions.sendgrid import (
+    ConfigNotFoundError as SGConfigNotFoundError,
+    SendgridError,
+)
+from diffengine.sendgrid import SendgridHandler
 
 home = None
 config = {}
@@ -290,6 +295,7 @@ class Diff(BaseModel):
     new = ForeignKeyField(EntryVersion, backref="next_diffs")
     created = DateTimeField(default=datetime.utcnow)
     tweeted = DateTimeField(null=True)
+    emailed = DateTimeField(null=True)
     blogged = DateTimeField(null=True)
 
     @property
@@ -554,6 +560,17 @@ def main():
         twitter_handler = None
         logging.warning("the twitter keys are not present in config. Reason", str(e))
 
+    try:
+        sendgrid_config = config.get("sendgrid")
+        sendgrid_handler = SendgridHandler(sendgrid_config)
+
+    except KeyError as e:
+        logging.warning(
+            "Sendgrid global configuration not set. Expecting configuration set per feed. Reason ",
+            str(e),
+        )
+        sendgrid_handler = SendgridHandler()
+
     checked = skipped = new = 0
 
     for f in config.get("feeds", []):
@@ -566,7 +583,7 @@ def main():
 
         # get latest content for each entry
         for entry in feed.entries:
-            result = process_entry(entry, f["twitter"], twitter_handler, lang)
+            result = process_entry(entry, f, twitter_handler, sendgrid_handler, lang)
             skipped += result["skipped"]
             checked += result["checked"]
             new += result["new"]
@@ -583,7 +600,7 @@ def main():
     browser.quit()
 
 
-def process_entry(entry, token=None, twitter_handler=None, lang={}):
+def process_entry(entry, feed_config, twitter=None, sendgrid=None, lang={}):
     result = {"skipped": 0, "checked": 0, "new": 0}
     if not entry.stale:
         result["skipped"] = 1
@@ -593,15 +610,36 @@ def process_entry(entry, token=None, twitter_handler=None, lang={}):
             version = entry.get_latest()
             if version:
                 result["new"] = 1
-                if version.diff and token is not None:
+                if version.diff:
                     try:
-                        twitter_handler.tweet_diff(version.diff, token, lang)
+                        if token is not None:
+                            twitter.tweet_diff(version.diff, token, lang)
                     except TwitterError as e:
                         logging.warning("error occurred while trying to tweet", str(e))
                     except Exception as e:
+                        logging.error("unknown error when tweeting diff", e)
+
+                    try:
+                        sendgrid.publish_diff(
+                            version.diff, feed_config.get("sendgrid", {})
+                        )
+
+                    except SGConfigNotFoundError as e:
+                        logging.error(
+                            "Missing configuration values for publishing entry %s",
+                            entry.url,
+                        )
+                    except SendgridError as e:
+                        logging.warning(
+                            "error occurred while trying to email with sendgrid ",
+                            str(e),
+                        )
+                    except Exception as e:
                         logging.error("unknown error when tweeting diff", str(e))
+
         except Exception as e:
-            logging.error("unable to get latest", str(e))
+            logging.error("unable to get latest", e)
+
     return result
 
 
