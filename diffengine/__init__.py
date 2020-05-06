@@ -104,7 +104,7 @@ class Entry(BaseModel):
     url = CharField()
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
-    tweet_status_id_str = CharField(null=True)
+    tweet_status_id_str = CharField(null=False, default="")
 
     @property
     def feeds(self):
@@ -236,7 +236,7 @@ class EntryVersion(BaseModel):
     created = DateTimeField(default=datetime.utcnow)
     archive_url = CharField(null=True)
     entry = ForeignKeyField(Entry, backref="versions")
-    tweet_status_id_str = CharField(null=True)
+    tweet_status_id_str = CharField(null=False, default="")
 
     @property
     def diff(self):
@@ -450,6 +450,17 @@ def get_initial_config():
             "access_token_secret": token[1],
         }
 
+    answer = input("Would you like to set up emailing edits? [Y/n] ")
+    if answer.lower() == "y":
+        print("Go to https://app.sendgrid.com/ and get an API key.")
+        api_key = input("What is the API key? ")
+        sender = input("What email address is sending the email? ")
+        receivers = input("Who are receiving the emails?  ")
+
+        config["sendgrid"] = {"api_key": api_key}
+
+        config["feeds"][0]["sendgrid"] = {"sender": sender, "receivers": receivers}
+
     print("Saved your configuration in %s/config.yaml" % home.rstrip("/"))
     print("Fetching initial set of entries.")
 
@@ -549,7 +560,7 @@ def main():
     lang = config.get("lang", {})
 
     try:
-        twitter_config = config.get("twitter")
+        twitter_config = config.get("twitter", {})
         twitter_handler = TwitterHandler(
             twitter_config["consumer_key"], twitter_config["consumer_secret"]
         )
@@ -560,16 +571,8 @@ def main():
         twitter_handler = None
         logging.warning("the twitter keys are not present in config. Reason", str(e))
 
-    try:
-        sendgrid_config = config.get("sendgrid")
-        sendgrid_handler = SendgridHandler(sendgrid_config)
-
-    except KeyError as e:
-        logging.warning(
-            "Sendgrid global configuration not set. Expecting configuration set per feed. Reason ",
-            str(e),
-        )
-        sendgrid_handler = SendgridHandler()
+    sendgrid_config = config.get("sendgrid", {})
+    sendgrid_handler = SendgridHandler(sendgrid_config)
 
     checked = skipped = new = 0
 
@@ -612,7 +615,8 @@ def process_entry(entry, feed_config, twitter=None, sendgrid=None, lang={}):
                 result["new"] = 1
                 if version.diff:
                     try:
-                        if token is not None:
+                        token = feed_config.get("twitter", {})
+                        if token:
                             twitter.tweet_diff(version.diff, token, lang)
                     except TwitterError as e:
                         logging.warning("error occurred while trying to tweet", str(e))
