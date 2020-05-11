@@ -377,7 +377,7 @@ class EntryTest(TestCase):
         sendgrid_config = {
             "api_token": "12345",
             "sender": "test@test.test",
-            "receivers": "test@test.test",
+            "recipients": "test@test.test, test2@test.test",
         }
         result = process_entry(entry, {"sendgrid": sendgrid_config}, None, sendgrid)
 
@@ -582,7 +582,7 @@ class SendgridHandlerTest(TestCase):
         "sendgrid": {
             "api_token": "12345",
             "sender": "test@test.test",
-            "receivers": "test@test.test",
+            "recipients": "test@test.test, test2@test.test",
         }
     }
 
