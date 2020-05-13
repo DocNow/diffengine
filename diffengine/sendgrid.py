@@ -1,7 +1,7 @@
 import logging
 
 from datetime import datetime
-from sendgrid import Mail, To, SendGridAPIClient
+from sendgrid import Mail, Bcc, SendGridAPIClient
 
 from diffengine.exceptions.sendgrid import (
     AlreadyEmailedError,
@@ -31,7 +31,7 @@ class SendgridHandler:
 
     def build_recipients(self, recipients):
         if recipients:
-            return [To(x.strip()) for x in recipients.split(",")]
+            return [Bcc(x.strip()) for x in recipients.split(",")]
 
     def build_subject(self, diff):
         return diff.old.title
@@ -62,12 +62,9 @@ class SendgridHandler:
 
         subject = self.build_subject(diff)
         message = Mail(
-            from_email=sender,
-            to_emails=recipients,
-            subject=subject,
-            html_content=self.build_html_body(diff),
+            from_email=sender, subject=subject, html_content=self.build_html_body(diff)
         )
-
+        message.bcc = recipients
         try:
             self.mailer(api_token).send(message)
             diff.emailed = datetime.utcnow()
