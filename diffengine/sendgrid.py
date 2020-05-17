@@ -62,9 +62,13 @@ class SendgridHandler:
 
         subject = self.build_subject(diff)
         message = Mail(
-            from_email=sender, subject=subject, html_content=self.build_html_body(diff)
+            from_email=sender,
+            subject=subject,
+            to_emails=recipients.pop(0),
+            html_content=self.build_html_body(diff),
         )
-        message.bcc = recipients
+        if recipients:
+            message.bcc = recipients
         try:
             self.mailer(api_token).send(message)
             diff.emailed = datetime.utcnow()
