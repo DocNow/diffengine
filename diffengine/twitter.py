@@ -6,9 +6,9 @@ from datetime import datetime
 from diffengine.text_builder import build_text
 from exceptions.twitter import (
     AlreadyTweetedError,
-    ConfigNotFoundError,
+    TwitterConfigNotFoundError,
     TokenNotFoundError,
-    AchiveUrlNotFoundError,
+    TwitterAchiveUrlNotFoundError,
     UpdateStatusError,
 )
 
@@ -19,7 +19,7 @@ class TwitterHandler:
 
     def __init__(self, consumer_key, consumer_secret):
         if not consumer_key or not consumer_secret:
-            raise ConfigNotFoundError()
+            raise TwitterConfigNotFoundError()
 
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
@@ -59,7 +59,7 @@ class TwitterHandler:
         elif diff.tweeted:
             raise AlreadyTweetedError(diff)
         elif not (diff.old.archive_url and diff.new.archive_url):
-            raise AchiveUrlNotFoundError(diff)
+            raise TwitterAchiveUrlNotFoundError(diff)
 
         twitter = self.api(token)
         text = build_text(diff, lang)

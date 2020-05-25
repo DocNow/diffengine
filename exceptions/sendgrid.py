@@ -2,7 +2,7 @@ class SendgridError(RuntimeError):
     pass
 
 
-class ConfigNotFoundError(SendgridError):
+class SendgridConfigNotFoundError(SendgridError):
     """Exception raised if the Sendgrid instance has not the API key"""
 
     def __init__(self):
@@ -14,6 +14,6 @@ class AlreadyEmailedError(SendgridError):
         self.message = "diff %s was already emailed with sendgrid " % diff_id
 
 
-class ArchiveUrlNotFoundError(SendgridError):
+class SendgridArchiveUrlNotFoundError(SendgridError):
     def __init__(self):
         self.message = "not publishing without archive urls"
