@@ -423,7 +423,7 @@ class TwitterHandlerTest(TestCase):
     ):
 
         entry = MagicMock()
-        type(entry).tweet_status_id_str = PropertyMock(return_value=None)
+        type(entry).tweet_status_id_str = PropertyMock(return_value="")
 
         diff = get_mocked_diff()
         type(diff.old).entry = entry
