@@ -14,4 +14,4 @@ readability-lxml
 envyaml>=0.1912
 pre-commit==2.3.0
 sendgrid
-psycopg2-binary==2.8.3
+psycopg2-binary==2.8.5
