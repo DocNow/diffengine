@@ -159,7 +159,9 @@ class Entry(BaseModel):
 
         # make sure we don't go too fast
         # TODO: can we remove this? Why is this here?
-        time.sleep(1)
+        time_sleep = config.get("time_sleep", 0)
+        if time_sleep > 0:
+            time.sleep(time_sleep)
 
         # fetch the current readability-ized content for the page
         logging.info("checking %s", self.url)
