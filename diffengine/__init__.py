@@ -39,6 +39,7 @@ from peewee import (
     ForeignKeyField,
     Model,
     SqliteDatabase,
+    TextField,
 )
 from playhouse.db_url import connect
 from playhouse.migrate import SqliteMigrator, migrate
@@ -60,8 +61,8 @@ class BaseModel(Model):
 
 
 class Feed(BaseModel):
-    url = CharField(primary_key=True)
-    name = CharField()
+    url = TextField(primary_key=True)
+    name = TextField()
     created = DateTimeField(default=datetime.utcnow)
 
     @property
@@ -105,7 +106,7 @@ class Feed(BaseModel):
 
 
 class Entry(BaseModel):
-    url = CharField()
+    url = TextField()
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
     tweet_status_id_str = CharField(null=False, default="")
@@ -236,11 +237,11 @@ class FeedEntry(BaseModel):
 
 
 class EntryVersion(BaseModel):
-    title = CharField()
-    url = CharField(index=True)
-    summary = CharField()
+    title = TextField()
+    url = TextField(index=True)
+    summary = TextField()
     created = DateTimeField(default=datetime.utcnow)
-    archive_url = CharField(null=True)
+    archive_url = TextField(null=True)
     entry = ForeignKeyField(Entry, backref="versions")
     tweet_status_id_str = CharField(null=False, default="")
 
