@@ -11,7 +11,7 @@ script: py.test
 before_install:
   - sudo apt-get -y update
   - sudo apt-get install firefox-geckodriver
-  - sudo apt-get install chromium-chromedriver=83
+  - sudo apt-get install chromium-chromedriver
 after_failure: cat test/diffengine.log
 notifications:
   slack:
