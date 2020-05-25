@@ -66,7 +66,7 @@ class TwitterHandler:
 
         # Check if the thread exists
         thread_status_id_str = None
-        if diff.old.entry.tweet_status_id_str is None:
+        if diff.old.entry.tweet_status_id_str == "":
             try:
                 thread_status_id_str = self.create_thread(
                     diff.old.entry, diff.old, token
