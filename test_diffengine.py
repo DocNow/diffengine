@@ -25,6 +25,7 @@ from diffengine import (
     UA,
     TwitterHandler,
     SendgridHandler,
+    _fingerprint,
 )
 from diffengine.text_builder import build_text
 from diffengine.utils import generate_config
@@ -41,12 +42,10 @@ from exceptions.twitter import (
     UpdateStatusError,
 )
 
-if os.path.isdir("test"):
-    shutil.rmtree("test")
+test_home = "test"
 
-generate_config("test", {"db": "sqlite:///:memory:"})
-# set things up but disable prompting for initial feed
-init("test", prompt=False)
+if os.path.isdir(test_home):
+    shutil.rmtree(test_home)
 
 # the sequence of these tests is significant
 
@@ -55,119 +54,120 @@ def test_version():
     assert setup.version in UA
 
 
-def test_feed():
-    f = Feed.create(name="Test", url="https://inkdroid.org/feed.xml")
-    f.get_latest()
-    assert f.created
-    assert len(f.entries) == 10
-
-
-def test_entry():
-    f = Feed.get(Feed.url == "https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-    v = e.get_latest()
-    assert type(v) == EntryVersion
-    assert len(e.versions) == 1
-
-
-def test_diff():
-    f = Feed.get(Feed.url == "https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-    v1 = e.versions[0]
-
-    # remove some characters from the version
-    v1.summary = v1.summary[0:-20]
-    v1.save()
-
-    v2 = e.get_latest()
-    assert type(v2) == EntryVersion
-    assert v2.diff
-    assert v2.archive_url is not None
-    assert (
-        re.match("^https://web.archive.org/web/[0-9]+/.+$", v2.archive_url) is not None
-    )
-
-    diff = v2.diff
-    assert diff.old == v1
-    assert diff.new == v2
-    assert os.path.isfile(diff.html_path)
-    assert os.path.isfile(diff.screenshot_path)
-    assert os.path.isfile(diff.thumbnail_path)
-
-    # check that the url for the internet archive diff is working
-    assert re.match("^https://web.archive.org/web/diff/\d+/\d+/https.+$", diff.url)
-
-
-def test_html_diff():
-    f = Feed.get(Feed.url == "https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-
-    # add a change to the summary that htmldiff ignores
-    v1 = e.versions[-1]
-    parts = v1.summary.split()
-    parts.insert(2, "<br>   \n")
-    v1.summary = " ".join(parts)
-    v1.save()
-
-    v2 = e.get_latest()
-    assert v2 is None
-
-
-def test_many_to_many():
-
-    # these two feeds share this entry, we want diffengine to support
-    # multiple feeds for the same content, which is fairly common at
-    # large media organizations with multiple topical feeds
-    url = "https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
-
-    f1 = Feed.create(
-        name="feed1",
-        url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed1.xml",
-    )
-    f1.get_latest()
-
-    f2 = Feed.create(
-        name="feed2",
-        url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed2.xml",
-    )
-    f2.get_latest()
-
-    assert f1.entries.where(Entry.url == url).count() == 1
-    assert f2.entries.where(Entry.url == url).count() == 1
-
-    e = Entry.get(Entry.url == url)
-    assert FeedEntry.select().where(FeedEntry.entry == e).count() == 2
-
-
-def test_bad_feed_url():
-    # bad feed url shouldn't cause a fatal exception
-    f = Feed.create(name="feed1", url="http://example.org/feedfeed.xml")
-    f.get_latest()
-    assert True
-
-
-def test_whitespace():
-    f = Feed.get(url="https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-    v1 = e.versions[-1]
-
-    # add some whitespace
-    v1.summary = v1.summary + "\n\n    "
-    v1.save()
-
-    # whitespace should not count when diffing
-    v2 = e.get_latest()
-    assert v2 == None
-
-
 def test_fingerprint():
-    from diffengine import _fingerprint
-
     assert _fingerprint("foo bar") == "foobar"
     assert _fingerprint("foo bar\nbaz") == "foobarbaz"
     assert _fingerprint("foo<br>bar") == "foobar"
     assert _fingerprint("foo'bar") == "foobar"
     assert _fingerprint("foo’bar") == "foobar"
+
+
+class FeedTest(TestCase):
+    feed = None
+    entry = None
+    version = None
+
+    def setUp(self) -> None:
+        generate_config(test_home, {"db": "sqlite:///:memory:"})
+        # set things up but disable prompting for initial feed
+        init(test_home, prompt=False)
+        self.feed = Feed.create(name="Test", url="https://inkdroid.org/feed.xml")
+        self.feed.get_latest()
+        self.entry = self.feed.entries[0]
+        self.version = self.entry.get_latest()
+
+    def test_feed(self):
+        assert self.feed.created
+        assert len(self.feed.entries) == 10
+
+    def test_entry(self):
+        assert type(self.version) == EntryVersion
+        assert len(self.entry.versions) == 1
+
+    def test_diff(self):
+        e = self.entry
+        v1 = e.versions[0]
+
+        # remove some characters from the version
+        v1.summary = v1.summary[0:-20]
+        v1.save()
+
+        v2 = e.get_latest()
+        assert type(v2) == EntryVersion
+        assert v2.diff
+        assert v2.archive_url is not None
+        assert (
+            re.match("^https://web.archive.org/web/[0-9]+/.+$", v2.archive_url)
+            is not None
+        )
+
+        diff = v2.diff
+        assert diff.old == v1
+        assert diff.new == v2
+        assert os.path.isfile(diff.html_path)
+        assert os.path.isfile(diff.screenshot_path)
+        assert os.path.isfile(diff.thumbnail_path)
+
+        # check that the url for the internet archive diff is working
+        assert re.match(
+            "^https://web.archive.org/web/diff/\\d+/\\d+/https.+$", diff.url
+        )
+
+    def test_html_diff(self):
+        e = self.entry
+
+        # add a change to the summary that htmldiff ignores
+        v1 = e.versions[-1]
+        parts = v1.summary.split()
+        parts.insert(2, "<br>   \n")
+        v1.summary = " ".join(parts)
+        v1.save()
+
+        v2 = e.get_latest()
+        assert v2 is None
+
+    def test_many_to_many(self):
+
+        # these two feeds share this entry, we want diffengine to support
+        # multiple feeds for the same content, which is fairly common at
+        # large media organizations with multiple topical feeds
+        url = "https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
+
+        f1 = Feed.create(
+            name="feed1",
+            url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed1.xml",
+        )
+        f1.get_latest()
+
+        f2 = Feed.create(
+            name="feed2",
+            url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed2.xml",
+        )
+        f2.get_latest()
+
+        assert f1.entries.where(Entry.url == url).count() == 1
+        assert f2.entries.where(Entry.url == url).count() == 1
+
+        e = Entry.get(Entry.url == url)
+        assert FeedEntry.select().where(FeedEntry.entry == e).count() == 2
+
+    def test_bad_feed_url(self):
+        # bad feed url shouldn't cause a fatal exception
+        f = Feed.create(name="feed1", url="http://example.org/feedfeed.xml")
+        f.get_latest()
+        assert True
+
+    def test_whitespace(self):
+        e = self.feed.entries[0]
+        v1 = e.versions[-1]
+
+        # add some whitespace
+        v1.summary = v1.summary + "\n\n    "
+        v1.save()
+
+        # whitespace should not count when diffing
+        v2 = e.get_latest()
+        assert v2 == None
 
 
 class EnvVarsTest(TestCase):
@@ -186,7 +186,7 @@ class EnvVarsTest(TestCase):
         test_config = {
             "example": {"private_value": private_yaml_key, "public_value": public_value}
         }
-        generate_config("test", test_config)
+        generate_config(test_home, test_config)
 
         # test!
         new_config = load_config()

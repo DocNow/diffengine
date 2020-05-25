@@ -498,7 +498,7 @@ def setup_db():
 
     if isinstance(database_handler, SqliteDatabase):
         try:
-            migrator = SqliteMigrator(database)
+            migrator = SqliteMigrator(database_handler)
             migrate(migrator.add_index("entryversion", ("url",), False))
         except OperationalError as e:
             logging.debug(e)
