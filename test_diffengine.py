@@ -47,8 +47,6 @@ test_home = "test"
 if os.path.isdir(test_home):
     shutil.rmtree(test_home)
 
-# the sequence of these tests is significant
-
 
 def test_version():
     assert setup.version in UA
