@@ -171,6 +171,7 @@ class FeedTest(TestCase):
         assert v2 == None
 
     # This one is only for tweeting purposes only
+    # If no .env var is set, this one will success anyway :)
     def test_tweet_diff(self):
         e = self.entry
         v1 = e.versions[0]
