@@ -114,31 +114,6 @@ class FeedTest(TestCase):
             "^https://web.archive.org/web/diff/\\d+/\\d+/https.+$", diff.url
         )
 
-    def test_tweet_diff(self):
-        e = self.entry
-        v1 = e.versions[0]
-
-        # remove some characters from the version
-        v1.summary = v1.summary[0:-20]
-        v1.save()
-
-        v2 = e.get_latest()
-
-        # Actual tweeting purposes only
-        # run this alone for checking correct tweeting behavior
-        if v2 is not None:
-            diff = v2.diff
-            try:
-                token = test_config.get("twitter.token")
-                twitter_handler = TwitterHandler(
-                    test_config.get("twitter.consumer_key"),
-                    test_config.get("twitter.consumer_secret"),
-                )
-                twitter_handler.tweet_diff(diff, token)
-                twitter_handler.delete_diff(diff, token)
-            except Exception:
-                logging.debug("no tweet configured for test. Doing nothing")
-
     def test_html_diff(self):
         e = self.entry
 
@@ -194,6 +169,31 @@ class FeedTest(TestCase):
         # whitespace should not count when diffing
         v2 = e.get_latest()
         assert v2 == None
+
+    # This one is only for tweeting purposes only
+    def test_tweet_diff(self):
+        e = self.entry
+        v1 = e.versions[0]
+
+        # remove some characters from the version
+        v1.summary = v1.summary[0:-20]
+        v1.save()
+
+        v2 = e.get_latest()
+
+        # run this alone for checking correct tweeting behavior
+        if v2 is not None:
+            diff = v2.diff
+            try:
+                token = test_config.get("twitter.token")
+                twitter_handler = TwitterHandler(
+                    test_config.get("twitter.consumer_key"),
+                    test_config.get("twitter.consumer_secret"),
+                )
+                twitter_handler.tweet_diff(diff, token)
+                twitter_handler.delete_diff(diff, token)
+            except Exception:
+                logging.debug("no tweet configured for test. Doing nothing")
 
 
 class EnvVarsTest(TestCase):
