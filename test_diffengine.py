@@ -45,7 +45,11 @@ from exceptions.twitter import (
 )
 
 test_home = "test"
-test_config = EnvYAML("config-test.yaml", env_file=".env")
+test_env_file = ".env"
+test_config = EnvYAML(
+    "config-test.yaml",
+    env_file=test_env_file if os.path.isfile(test_env_file) else None,
+)
 
 if os.path.isdir(test_home):
     shutil.rmtree(test_home)
