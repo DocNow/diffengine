@@ -158,8 +158,6 @@ class Entry(BaseModel):
         be returned.
         """
 
-        # make sure we don't go too fast
-        # TODO: can we remove this? Why is this here?
         time_sleep = config.get("time_sleep", 0)
         if time_sleep > 0:
             time.sleep(time_sleep)
