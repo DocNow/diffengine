@@ -299,6 +299,18 @@ class Diff(BaseModel):
     blogged = DateTimeField(null=True)
 
     @property
+    def url_changed(self):
+        return self.old.url != self.new.url
+
+    @property
+    def title_changed(self):
+        return self.old.title != self.new.title
+
+    @property
+    def summary_changed(self):
+        return self.old.summary != self.new.summary
+
+    @property
     def html_path(self):
         # use prime number to spread across directories
         path = home_path("diffs/%s/%s.html" % ((self.id % 257), self.id))
