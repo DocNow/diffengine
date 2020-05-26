@@ -98,3 +98,8 @@ class TwitterHandler:
             diff.save()
         except Exception as e:
             logging.error("unable to tweet: %s", e)
+
+    def delete_diff(self, diff, token=None):
+        twitter = self.api(token)
+        twitter.destroy_status(diff.old.tweet_status_id_str)
+        twitter.destroy_status(diff.new.tweet_status_id_str)

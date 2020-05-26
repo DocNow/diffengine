@@ -2,6 +2,8 @@ import logging
 import os
 import re
 import yaml
+from envyaml import EnvYAML
+
 import setup
 import pytest
 import shutil
@@ -43,6 +45,7 @@ from exceptions.twitter import (
 )
 
 test_home = "test"
+test_config = EnvYAML("config-test.yaml", env_file=".env")
 
 if os.path.isdir(test_home):
     shutil.rmtree(test_home)
@@ -66,7 +69,7 @@ class FeedTest(TestCase):
     version = None
 
     def setUp(self) -> None:
-        generate_config(test_home, {"db": "sqlite:///:memory:"})
+        generate_config(test_home, {"db": test_config.get("db", "sqlite:///:memory:")})
         # set things up but disable prompting for initial feed
         init(test_home, prompt=False)
         self.feed = Feed.create(name="Test", url="https://inkdroid.org/feed.xml")
@@ -110,6 +113,31 @@ class FeedTest(TestCase):
         assert re.match(
             "^https://web.archive.org/web/diff/\\d+/\\d+/https.+$", diff.url
         )
+
+    def test_tweet_diff(self):
+        e = self.entry
+        v1 = e.versions[0]
+
+        # remove some characters from the version
+        v1.summary = v1.summary[0:-20]
+        v1.save()
+
+        v2 = e.get_latest()
+
+        # Actual tweeting purposes only
+        # run this alone for checking correct tweeting behavior
+        if v2 is not None:
+            diff = v2.diff
+            try:
+                token = test_config.get("twitter.token")
+                twitter_handler = TwitterHandler(
+                    test_config.get("twitter.consumer_key"),
+                    test_config.get("twitter.consumer_secret"),
+                )
+                twitter_handler.tweet_diff(diff, token)
+                twitter_handler.delete_diff(diff, token)
+            except Exception:
+                logging.debug("no tweet configured for test. Doing nothing")
 
     def test_html_diff(self):
         e = self.entry
