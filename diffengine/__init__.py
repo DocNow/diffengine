@@ -8,7 +8,6 @@ UA = "diffengine/0.2.7 (+https://github.com/docnow/diffengine)"
 import os
 import re
 import sys
-import json
 import time
 import yaml
 import bleach
@@ -19,45 +18,51 @@ import tweepy
 import logging
 import argparse
 import requests
-import selenium
 import htmldiff2
 import feedparser
-import subprocess
 import readability
 import unicodedata
 
-from peewee import *
-from playhouse.migrate import SqliteMigrator, migrate
+from diffengine.sendgrid import SendgridHandler
+from diffengine.twitter import TwitterHandler
+
+from exceptions.webdriver import UnknownWebdriverError
+from exceptions.sendgrid import SendgridConfigNotFoundError, SendgridError
+from exceptions.twitter import TwitterConfigNotFoundError, TwitterError
+
 from datetime import datetime
+from peewee import (
+    DatabaseProxy,
+    CharField,
+    DateTimeField,
+    OperationalError,
+    ForeignKeyField,
+    Model,
+    SqliteDatabase,
+    TextField,
+)
+from playhouse.db_url import connect
+from playhouse.migrate import SqliteMigrator, migrate
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
 
-from exceptions.webdriver import UnknownWebdriverError
-from exceptions.twitter import ConfigNotFoundError, TwitterError
-from diffengine.twitter import TwitterHandler
-from exceptions.sendgrid import (
-    ConfigNotFoundError as SGConfigNotFoundError,
-    SendgridError,
-)
-from diffengine.sendgrid import SendgridHandler
-
 home = None
 config = {}
-db = SqliteDatabase(None)
+database = DatabaseProxy()
 browser = None
 
 
 class BaseModel(Model):
     class Meta:
-        database = db
+        database = database
 
 
 class Feed(BaseModel):
-    url = CharField(primary_key=True)
-    name = CharField()
+    url = TextField(primary_key=True)
+    name = TextField()
     created = DateTimeField(default=datetime.utcnow)
 
     @property
@@ -101,7 +106,7 @@ class Feed(BaseModel):
 
 
 class Entry(BaseModel):
-    url = CharField()
+    url = TextField()
     created = DateTimeField(default=datetime.utcnow)
     checked = DateTimeField(default=datetime.utcnow)
     tweet_status_id_str = CharField(null=False, default="")
@@ -153,9 +158,9 @@ class Entry(BaseModel):
         be returned.
         """
 
-        # make sure we don't go too fast
-        # TODO: can we remove this? Why is this here?
-        time.sleep(1)
+        time_sleep = config.get("time_sleep", 0)
+        if time_sleep > 0:
+            time.sleep(time_sleep)
 
         # fetch the current readability-ized content for the page
         logging.info("checking %s", self.url)
@@ -230,11 +235,11 @@ class FeedEntry(BaseModel):
 
 
 class EntryVersion(BaseModel):
-    title = CharField()
-    url = CharField(index=True)
-    summary = CharField()
+    title = TextField()
+    url = TextField(index=True)
+    summary = TextField()
     created = DateTimeField(default=datetime.utcnow)
-    archive_url = CharField(null=True)
+    archive_url = TextField(null=True)
     entry = ForeignKeyField(Entry, backref="versions")
     tweet_status_id_str = CharField(null=False, default="")
 
@@ -496,17 +501,20 @@ def home_path(rel_path):
 
 
 def setup_db():
-    global db
-    db_file = config.get("db", home_path("diffengine.db"))
-    logging.debug("connecting to db %s", db_file)
-    db.init(db_file)
-    db.connect()
-    db.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
-    try:
-        migrator = SqliteMigrator(db)
-        migrate(migrator.add_index("entryversion", ("url",), False))
-    except OperationalError as e:
-        logging.debug(e)
+    global home, database
+    database_url = config.get("db", "sqlite:///diffengine.db")
+    logging.debug("connecting to db %s", database_url)
+    database_handler = connect(database_url)
+    database.initialize(database_handler)
+    database.connect()
+    database.create_tables([Feed, Entry, FeedEntry, EntryVersion, Diff], safe=True)
+
+    if isinstance(database_handler, SqliteDatabase):
+        try:
+            migrator = SqliteMigrator(database_handler)
+            migrate(migrator.add_index("entryversion", ("url",), False))
+        except OperationalError as e:
+            logging.debug(e)
 
 
 def chromedriver_browser(executable_path, binary_location):
@@ -543,7 +551,7 @@ def setup_browser(engine="geckodriver", executable_path=None, binary_location=""
 
 
 def init(new_home, prompt=True):
-    global home, browser
+    global home, config, browser
     home = new_home
     load_config(prompt)
     try:
@@ -576,7 +584,7 @@ def main():
         twitter_handler = TwitterHandler(
             twitter_config["consumer_key"], twitter_config["consumer_secret"]
         )
-    except ConfigNotFoundError as e:
+    except TwitterConfigNotFoundError as e:
         twitter_handler = None
         logging.warning("error when creating Twitter Handler. Reason", str(e))
     except KeyError as e:
@@ -640,7 +648,7 @@ def process_entry(entry, feed_config, twitter=None, sendgrid=None, lang={}):
                             version.diff, feed_config.get("sendgrid", {})
                         )
 
-                    except SGConfigNotFoundError as e:
+                    except SendgridConfigNotFoundError as e:
                         logging.error(
                             "Missing configuration values for publishing entry %s",
                             entry.url,
