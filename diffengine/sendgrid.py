@@ -31,7 +31,7 @@ class SendgridHandler:
 
     def build_recipients(self, recipients):
         if recipients:
-            return [Bcc(x.strip()) for x in recipients.split(",")]
+            return [x.strip() for x in recipients.split(",")]
 
     def build_subject(self, diff):
         return diff.old.title
