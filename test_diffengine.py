@@ -29,7 +29,7 @@ from diffengine import (
     SendgridHandler,
     _fingerprint,
 )
-from diffengine.text_builder import build_text
+from diffengine.text import build_text, to_utf8
 from diffengine.utils import generate_config
 from exceptions.sendgrid import (
     SendgridConfigNotFoundError,
@@ -663,8 +663,8 @@ def get_mocked_diff(with_archive_urls=True):
 
 class TextBuilderTest(TestCase):
     @patch("logging.warning")
-    @patch("diffengine.text_builder.build_with_lang")
-    @patch("diffengine.text_builder.build_with_default_content")
+    @patch("diffengine.text.build_with_lang")
+    @patch("diffengine.text.build_with_default_content")
     def test_build_with_default_content_when_no_lang_given(
         self, mocked_build_with_default_content, mocked_build_from_lang, mocked_warning
     ):
@@ -679,8 +679,8 @@ class TextBuilderTest(TestCase):
         mocked_build_from_lang.assert_not_called()
 
     @patch("logging.warning")
-    @patch("diffengine.text_builder.build_with_lang")
-    @patch("diffengine.text_builder.build_with_default_content")
+    @patch("diffengine.text.build_with_lang")
+    @patch("diffengine.text.build_with_default_content")
     def test_build_with_default_content_when_lang_is_incomplete(
         self, mocked_build_with_default_content, mocked_build_from_lang, mocked_warning
     ):
@@ -700,8 +700,8 @@ class TextBuilderTest(TestCase):
         mocked_build_from_lang.assert_not_called()
 
     @patch("logging.warning")
-    @patch("diffengine.text_builder.build_with_lang")
-    @patch("diffengine.text_builder.build_with_default_content")
+    @patch("diffengine.text.build_with_lang")
+    @patch("diffengine.text.build_with_default_content")
     def test_build_with_lang_when_lang_given(
         self, mocked_build_with_default_content, mocked_build_from_lang, mocked_warning
     ):
@@ -722,7 +722,7 @@ class TextBuilderTest(TestCase):
         mocked_build_with_default_content.assert_not_called()
         mocked_build_from_lang.assert_called_once()
 
-    @patch("diffengine.text_builder.build_with_lang")
+    @patch("diffengine.text.build_with_lang")
     def test_default_content_text(self, mocked_build_from_lang):
         diff = get_mocked_diff()
         type(diff.new).title = "Test"
@@ -804,3 +804,16 @@ class TextBuilderTest(TestCase):
         self.assertEqual(
             text, "change in the URL, the title and the summary\n%s" % diff.url
         )
+
+
+class EncodingTest(TestCase):
+    def test_utf8_do_nothingg(self):
+        text_utf8 = "Me preocupa más la parte futbolística"
+        result = to_utf8(text_utf8)
+        self.assertEquals(result, text_utf8)
+
+    def test_latin1_to_utf8(self):
+        text_latin = "Me preocupa mÃ¡s la parte futbolÃ­stica"
+        text_utf8 = "Me preocupa más la parte futbolística"
+        result = to_utf8(text_latin)
+        self.assertEquals(result, text_utf8)

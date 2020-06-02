@@ -24,6 +24,7 @@ import readability
 import unicodedata
 
 from diffengine.sendgrid import SendgridHandler
+from diffengine.text import to_utf8
 from diffengine.twitter import TwitterHandler
 
 from exceptions.webdriver import UnknownWebdriverError
@@ -173,8 +174,7 @@ class Entry(BaseModel):
         if resp.status_code != 200:
             logging.warn("Got %s when fetching %s", resp.status_code, self.url)
             return None
-
-        doc = readability.Document(resp.text)
+        doc = readability.Document(to_utf8(resp.text))
         title = doc.title()
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
