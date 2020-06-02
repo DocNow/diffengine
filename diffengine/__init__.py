@@ -35,10 +35,10 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from envyaml import EnvYAML
 
-from exceptions.webdriver import UnknownWebdriverError
-from exceptions.twitter import ConfigNotFoundError, TwitterError
+from diffengine.exceptions.webdriver import UnknownWebdriverError
+from diffengine.exceptions.twitter import ConfigNotFoundError, TwitterError
 from diffengine.twitter import TwitterHandler
-from exceptions.sendgrid import (
+from diffengine.exceptions.sendgrid import (
     ConfigNotFoundError as SGConfigNotFoundError,
     SendgridError,
 )

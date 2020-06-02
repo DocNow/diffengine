@@ -28,13 +28,13 @@ from diffengine import (
     TwitterHandler,
     SendgridHandler,
 )
-from exceptions.sendgrid import (
+from diffengine.exceptions.sendgrid import (
     ConfigNotFoundError as SGConfigNotFoundError,
     AlreadyEmailedError as SGAlreadyEmailedError,
     ArchiveUrlNotFoundError as SGArchiveNotFoundError,
 )
 from diffengine.text_builder import build_text
-from exceptions.twitter import (
+from diffengine.exceptions.twitter import (
     ConfigNotFoundError,
     TokenNotFoundError,
     AlreadyTweetedError,

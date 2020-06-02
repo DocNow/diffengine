@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from sendgrid import Mail, SendGridAPIClient
 
-from exceptions.sendgrid import (
+from diffengine.exceptions.sendgrid import (
     AlreadyEmailedError,
     ConfigNotFoundError,
     ArchiveUrlNotFoundError,
