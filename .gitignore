@@ -14,3 +14,4 @@ Pip*
 .env
 venv
 .idea
+*.ignore.py

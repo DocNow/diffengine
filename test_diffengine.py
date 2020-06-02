@@ -29,7 +29,7 @@ from diffengine import (
     SendgridHandler,
     _fingerprint,
 )
-from diffengine.text_builder import build_text
+from diffengine.text import build_text, to_utf8
 from diffengine.utils import generate_config
 from exceptions.sendgrid import (
     SendgridConfigNotFoundError,
@@ -804,3 +804,16 @@ class TextBuilderTest(TestCase):
         self.assertEqual(
             text, "change in the URL, the title and the summary\n%s" % diff.url
         )
+
+
+class EncodingTest(TestCase):
+    def test_utf8_do_nothingg(self):
+        text_utf8 = "Me preocupa más la parte futbolística"
+        result = to_utf8(text_utf8)
+        self.assertEquals(result, text_utf8)
+
+    def test_latin1_to_utf8(self):
+        text_latin = "Me preocupa mÃ¡s la parte futbolÃ­stica"
+        text_utf8 = "Me preocupa más la parte futbolística"
+        result = to_utf8(text_latin)
+        self.assertEquals(result, text_utf8)
