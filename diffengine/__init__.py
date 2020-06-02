@@ -37,6 +37,7 @@ from envyaml import EnvYAML
 
 from diffengine.exceptions.webdriver import UnknownWebdriverError
 from diffengine.exceptions.twitter import ConfigNotFoundError, TwitterError
+from diffengine.text import to_utf8
 from diffengine.twitter import TwitterHandler
 from diffengine.exceptions.sendgrid import (
     ConfigNotFoundError as SGConfigNotFoundError,
@@ -169,7 +170,7 @@ class Entry(BaseModel):
             logging.warn("Got %s when fetching %s", resp.status_code, self.url)
             return None
 
-        doc = readability.Document(resp.text)
+        doc = readability.Document(to_utf8(resp.text))
         title = doc.title()
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)

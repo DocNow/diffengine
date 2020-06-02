@@ -3,7 +3,7 @@ import tweepy
 
 from datetime import datetime
 
-from diffengine.text_builder import build_text
+from diffengine.text import build_text
 from diffengine.exceptions.twitter import (
     AlreadyTweetedError,
     ConfigNotFoundError,
