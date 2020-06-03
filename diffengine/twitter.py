@@ -4,7 +4,7 @@ import tweepy
 from datetime import datetime
 
 from diffengine.text import build_text
-from exceptions.twitter import (
+from diffengine.exceptions.twitter import (
     AlreadyTweetedError,
     TwitterConfigNotFoundError,
     TokenNotFoundError,

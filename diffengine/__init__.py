@@ -23,15 +23,14 @@ import feedparser
 import readability
 import unicodedata
 
+from datetime import datetime
+from diffengine.exceptions.webdriver import UnknownWebdriverError
+from diffengine.exceptions.sendgrid import SendgridConfigNotFoundError, SendgridError
+from diffengine.exceptions.twitter import TwitterConfigNotFoundError, TwitterError
 from diffengine.sendgrid import SendgridHandler
 from diffengine.text import to_utf8
 from diffengine.twitter import TwitterHandler
-
-from exceptions.webdriver import UnknownWebdriverError
-from exceptions.sendgrid import SendgridConfigNotFoundError, SendgridError
-from exceptions.twitter import TwitterConfigNotFoundError, TwitterError
-
-from datetime import datetime
+from envyaml import EnvYAML
 from peewee import (
     DatabaseProxy,
     CharField,
@@ -48,7 +47,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
-from envyaml import EnvYAML
 
 home = None
 config = {}

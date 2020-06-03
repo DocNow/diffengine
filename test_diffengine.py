@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import yaml
 from envyaml import EnvYAML
 
 import setup
@@ -31,12 +30,12 @@ from diffengine import (
 )
 from diffengine.text import build_text, to_utf8
 from diffengine.utils import generate_config
-from exceptions.sendgrid import (
+from diffengine.exceptions.sendgrid import (
     SendgridConfigNotFoundError,
     AlreadyEmailedError,
     SendgridArchiveUrlNotFoundError,
 )
-from exceptions.twitter import (
+from diffengine.exceptions.twitter import (
     TwitterConfigNotFoundError,
     TokenNotFoundError,
     AlreadyTweetedError,
