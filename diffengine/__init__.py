@@ -27,7 +27,7 @@ from datetime import datetime
 from diffengine.exceptions.webdriver import UnknownWebdriverError
 from diffengine.exceptions.sendgrid import SendgridConfigNotFoundError, SendgridError
 from diffengine.exceptions.twitter import TwitterConfigNotFoundError, TwitterError
-from diffengine.text import to_utf8
+from diffengine.text import to_utf8, matches
 from diffengine.sendgrid import SendgridHandler
 from diffengine.twitter import TwitterHandler
 from envyaml import EnvYAML

@@ -156,9 +156,29 @@ twitter:
   consumer_secret: CONSUMER_SECRET
 ```
 
+### Skip entry
+
+You can also keep an entry if matches with a regular expression pattern. This is useful for avoid the "subscribe now" pages.
+This is configured per feed like so:
+
+```yaml
+- name: The Globe and Mail - Report on Business
+  skip_pattern: "you have access to only \\d+ articles"
+  twitter:
+    access_token: ACCESS_TOKEN
+    access_token_secret: ACCESS_TOKEN_SECRET
+  url: http://www.theglobeandmail.com/report-on-business/?service=rss
+```
+
+In this example, if the page says contains the text "you have access to only 10 articles" will skip it. the same if says any number of articles as it's a regular expression.
+The `skip_pattern` performs a `re.search` operation and uses the flags for `case insensitive` and `multiline`.
+
+Look for the docs for [more information about Regular Expressions and the search operation.](https://docs.python.org/3/library/re.html#search-vs-match)
+
+
 ### Tweet content
 
-By default, the tweeted diff will include the article's title and the archive diff url, [like this](https://twitter.com/mp_diff/status/1255973684994625539).
+By default, the tweeted diff will include the article's title and the archive diff url, [like this.](https://twitter.com/ld_diff/status/1267989297048817672)
 
 You change this by tweeting what's changed: the url, the title and/or the summary. For doing so, you need to specify **all** the following `lang` keys:
 
