@@ -31,12 +31,12 @@ from diffengine import (
 )
 from diffengine.text_builder import build_text
 from diffengine.utils import generate_config
-from exceptions.sendgrid import (
+from diffengine.exceptions.sendgrid import (
     SendgridConfigNotFoundError,
     AlreadyEmailedError,
     SendgridArchiveUrlNotFoundError,
 )
-from exceptions.twitter import (
+from diffengine.exceptions.twitter import (
     TwitterConfigNotFoundError,
     TokenNotFoundError,
     AlreadyTweetedError,
