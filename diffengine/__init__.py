@@ -172,6 +172,7 @@ class Entry(BaseModel):
         if resp.status_code != 200:
             logging.warn("Got %s when fetching %s", resp.status_code, self.url)
             return None
+
         doc = readability.Document(to_utf8(resp.text))
         title = doc.title()
         summary = doc.summary(html_partial=True)
