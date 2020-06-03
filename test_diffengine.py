@@ -1,14 +1,14 @@
 import logging
 import os
 import re
-
 import yaml
-from selenium import webdriver
+from envyaml import EnvYAML
 
 import setup
 import pytest
 import shutil
 
+from selenium import webdriver
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from unittest.mock import PropertyMock
@@ -27,147 +27,178 @@ from diffengine import (
     UA,
     TwitterHandler,
     SendgridHandler,
-)
-from diffengine.exceptions.sendgrid import (
-    ConfigNotFoundError as SGConfigNotFoundError,
-    AlreadyEmailedError as SGAlreadyEmailedError,
-    ArchiveUrlNotFoundError as SGArchiveNotFoundError,
+    _fingerprint,
 )
 from diffengine.text import build_text, to_utf8, matches
+from diffengine.utils import generate_config
+from diffengine.exceptions.sendgrid import (
+    SendgridConfigNotFoundError,
+    AlreadyEmailedError,
+    SendgridArchiveUrlNotFoundError,
+)
 from diffengine.exceptions.twitter import (
-    ConfigNotFoundError,
+    TwitterConfigNotFoundError,
     TokenNotFoundError,
     AlreadyTweetedError,
-    AchiveUrlNotFoundError,
+    TwitterAchiveUrlNotFoundError,
     UpdateStatusError,
 )
 
-if os.path.isdir("test"):
-    shutil.rmtree("test")
+test_home = "test"
+test_env_file = ".env"
+test_config = EnvYAML(
+    "config-test.yaml",
+    env_file=test_env_file if os.path.isfile(test_env_file) else None,
+)
 
-# set things up but disable prompting for initial feed
-init("test", prompt=False)
-
-# the sequence of these tests is significant
+if os.path.isdir(test_home):
+    shutil.rmtree(test_home)
 
 
 def test_version():
     assert setup.version in UA
 
 
-def test_feed():
-    f = Feed.create(name="Test", url="https://inkdroid.org/feed.xml")
-    f.get_latest()
-    assert f.created
-    assert len(f.entries) == 10
-
-
-def test_entry():
-    f = Feed.get(Feed.url == "https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-    v = e.get_latest()
-    assert type(v) == EntryVersion
-    assert len(e.versions) == 1
-
-
-def test_diff():
-    f = Feed.get(Feed.url == "https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-    v1 = e.versions[0]
-
-    # remove some characters from the version
-    v1.summary = v1.summary[0:-20]
-    v1.save()
-
-    v2 = e.get_latest()
-    assert type(v2) == EntryVersion
-    assert v2.diff
-    assert v2.archive_url is not None
-    assert (
-        re.match("^https://web.archive.org/web/[0-9]+/.+$", v2.archive_url) is not None
-    )
-
-    diff = v2.diff
-    assert diff.old == v1
-    assert diff.new == v2
-    assert os.path.isfile(diff.html_path)
-    assert os.path.isfile(diff.screenshot_path)
-    assert os.path.isfile(diff.thumbnail_path)
-
-    # check that the url for the internet archive diff is working
-    assert re.match("^https://web.archive.org/web/diff/\\d+/\\d+/https.+$", diff.url)
-
-
-def test_html_diff():
-    f = Feed.get(Feed.url == "https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-
-    # add a change to the summary that htmldiff ignores
-    v1 = e.versions[-1]
-    parts = v1.summary.split()
-    parts.insert(2, "<br>   \n")
-    v1.summary = " ".join(parts)
-    v1.save()
-
-    v2 = e.get_latest()
-    assert v2 is None
-
-
-def test_many_to_many():
-
-    # these two feeds share this entry, we want diffengine to support
-    # multiple feeds for the same content, which is fairly common at
-    # large media organizations with multiple topical feeds
-    url = "https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
-
-    f1 = Feed.create(
-        name="feed1",
-        url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed1.xml",
-    )
-    f1.get_latest()
-
-    f2 = Feed.create(
-        name="feed2",
-        url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed2.xml",
-    )
-    f2.get_latest()
-
-    assert f1.entries.where(Entry.url == url).count() == 1
-    assert f2.entries.where(Entry.url == url).count() == 1
-
-    e = Entry.get(Entry.url == url)
-    assert FeedEntry.select().where(FeedEntry.entry == e).count() == 2
-
-
-def test_bad_feed_url():
-    # bad feed url shouldn't cause a fatal exception
-    f = Feed.create(name="feed1", url="http://example.org/feedfeed.xml")
-    f.get_latest()
-    assert True
-
-
-def test_whitespace():
-    f = Feed.get(url="https://inkdroid.org/feed.xml")
-    e = f.entries[0]
-    v1 = e.versions[-1]
-
-    # add some whitespace
-    v1.summary = v1.summary + "\n\n    "
-    v1.save()
-
-    # whitespace should not count when diffing
-    v2 = e.get_latest()
-    assert v2 == None
-
-
 def test_fingerprint():
-    from diffengine import _fingerprint
-
     assert _fingerprint("foo bar") == "foobar"
     assert _fingerprint("foo bar\nbaz") == "foobarbaz"
     assert _fingerprint("foo<br>bar") == "foobar"
     assert _fingerprint("foo'bar") == "foobar"
     assert _fingerprint("foo’bar") == "foobar"
+
+
+class FeedTest(TestCase):
+    feed = None
+    entry = None
+    version = None
+
+    def setUp(self) -> None:
+        generate_config(test_home, {"db": test_config.get("db", "sqlite:///:memory:")})
+        # set things up but disable prompting for initial feed
+        init(test_home, prompt=False)
+        self.feed = Feed.create(name="Test", url="https://inkdroid.org/feed.xml")
+        self.feed.get_latest()
+        self.entry = self.feed.entries[0]
+        self.version = self.entry.get_latest()
+
+    def test_feed(self):
+        assert self.feed.created
+        assert len(self.feed.entries) == 10
+
+    def test_entry(self):
+        assert type(self.version) == EntryVersion
+        assert len(self.entry.versions) == 1
+
+    def test_diff(self):
+        e = self.entry
+        v1 = e.versions[0]
+
+        # remove some characters from the version
+        v1.summary = v1.summary[0:-20]
+        v1.save()
+
+        v2 = e.get_latest()
+        assert type(v2) == EntryVersion
+        assert v2.diff
+        assert v2.archive_url is not None
+        assert (
+            re.match("^https://web.archive.org/web/[0-9]+/.+$", v2.archive_url)
+            is not None
+        )
+
+        diff = v2.diff
+        assert diff.old == v1
+        assert diff.new == v2
+        assert os.path.isfile(diff.html_path)
+        assert os.path.isfile(diff.screenshot_path)
+        assert os.path.isfile(diff.thumbnail_path)
+
+        # check that the url for the internet archive diff is working
+        assert re.match(
+            "^https://web.archive.org/web/diff/\\d+/\\d+/https.+$", diff.url
+        )
+
+    def test_html_diff(self):
+        e = self.entry
+
+        # add a change to the summary that htmldiff ignores
+        v1 = e.versions[-1]
+        parts = v1.summary.split()
+        parts.insert(2, "<br>   \n")
+        v1.summary = " ".join(parts)
+        v1.save()
+
+        v2 = e.get_latest()
+        assert v2 is None
+
+    def test_many_to_many(self):
+
+        # these two feeds share this entry, we want diffengine to support
+        # multiple feeds for the same content, which is fairly common at
+        # large media organizations with multiple topical feeds
+        url = "https://www.washingtonpost.com/classic-apps/how-a-week-of-tweets-by-trump-stoked-anxiety-moved-markets-and-altered-plans/2017/01/07/38be8e64-d436-11e6-9cb0-54ab630851e8_story.html"
+
+        f1 = Feed.create(
+            name="feed1",
+            url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed1.xml",
+        )
+        f1.get_latest()
+
+        f2 = Feed.create(
+            name="feed2",
+            url="https://raw.githubusercontent.com/DocNow/diffengine/master/test-data/feed2.xml",
+        )
+        f2.get_latest()
+
+        assert f1.entries.where(Entry.url == url).count() == 1
+        assert f2.entries.where(Entry.url == url).count() == 1
+
+        e = Entry.get(Entry.url == url)
+        assert FeedEntry.select().where(FeedEntry.entry == e).count() == 2
+
+    def test_bad_feed_url(self):
+        # bad feed url shouldn't cause a fatal exception
+        f = Feed.create(name="feed1", url="http://example.org/feedfeed.xml")
+        f.get_latest()
+        assert True
+
+    def test_whitespace(self):
+        e = self.feed.entries[0]
+        v1 = e.versions[-1]
+
+        # add some whitespace
+        v1.summary = v1.summary + "\n\n    "
+        v1.save()
+
+        # whitespace should not count when diffing
+        v2 = e.get_latest()
+        assert v2 == None
+
+    # This one is only for tweeting purposes only
+    # If no .env var is set, this one will success anyway :)
+    def test_tweet_diff(self):
+        e = self.entry
+        v1 = e.versions[0]
+
+        # remove some characters from the version
+        v1.summary = v1.summary[0:-20]
+        v1.save()
+
+        v2 = e.get_latest()
+
+        # run this alone for checking correct tweeting behavior
+        if v2 is not None:
+            diff = v2.diff
+            try:
+                token = test_config.get("twitter.token")
+                twitter_handler = TwitterHandler(
+                    test_config.get("twitter.consumer_key"),
+                    test_config.get("twitter.consumer_secret"),
+                )
+                twitter_handler.tweet_diff(diff, token)
+                twitter_handler.delete_diff(diff, token)
+            except Exception:
+                logging.debug("no tweet configured for test. Doing nothing")
 
 
 class EnvVarsTest(TestCase):
@@ -186,8 +217,7 @@ class EnvVarsTest(TestCase):
         test_config = {
             "example": {"private_value": private_yaml_key, "public_value": public_value}
         }
-        config_file = home_path("config.yaml")
-        yaml.dump(test_config, open(config_file, "w"), default_flow_style=False)
+        generate_config(test_home, test_config)
 
         # test!
         new_config = load_config()
@@ -367,13 +397,17 @@ class TwitterHandlerTest(TestCase):
         logging.disable(logging.NOTSET)
 
     def test_raises_if_no_config_set(self):
-        self.assertRaises(ConfigNotFoundError, TwitterHandler, None, None)
-        self.assertRaises(ConfigNotFoundError, TwitterHandler, "myConsumerKey", None)
-        self.assertRaises(ConfigNotFoundError, TwitterHandler, None, "myConsumerSecret")
+        self.assertRaises(TwitterConfigNotFoundError, TwitterHandler, None, None)
+        self.assertRaises(
+            TwitterConfigNotFoundError, TwitterHandler, "myConsumerKey", None
+        )
+        self.assertRaises(
+            TwitterConfigNotFoundError, TwitterHandler, None, "myConsumerSecret"
+        )
 
         try:
             TwitterHandler("myConsumerKey", "myConsumerSecret")
-        except ConfigNotFoundError:
+        except TwitterConfigNotFoundError:
             self.fail("Twitter.__init__ raised ConfigNotFoundError unexpectedly!")
 
     def test_raises_if_no_token_provided(self):
@@ -401,15 +435,19 @@ class TwitterHandlerTest(TestCase):
         }
 
         twitter = TwitterHandler("myConsumerKey", "myConsumerSecret")
-        self.assertRaises(AchiveUrlNotFoundError, twitter.tweet_diff, diff, token)
+        self.assertRaises(
+            TwitterAchiveUrlNotFoundError, twitter.tweet_diff, diff, token
+        )
 
         type(diff.old).archive_url = PropertyMock(return_value="http://test.url/old")
-        self.assertRaises(AchiveUrlNotFoundError, twitter.tweet_diff, diff, token)
+        self.assertRaises(
+            TwitterAchiveUrlNotFoundError, twitter.tweet_diff, diff, token
+        )
 
         type(diff.new).archive_url = PropertyMock(return_value="http://test.url/new")
         try:
             twitter.tweet_diff(diff, token)
-        except AchiveUrlNotFoundError:
+        except TwitterAchiveUrlNotFoundError:
             self.fail("twitter.tweet_diff raised AchiveUrlNotFoundError unexpectedly!")
 
     class MockedStatus(MagicMock):
@@ -423,7 +461,7 @@ class TwitterHandlerTest(TestCase):
     ):
 
         entry = MagicMock()
-        type(entry).tweet_status_id_str = PropertyMock(return_value=None)
+        type(entry).tweet_status_id_str = PropertyMock(return_value="")
 
         diff = get_mocked_diff()
         type(diff.old).entry = entry
@@ -560,10 +598,10 @@ class SendgridHandlerTest(TestCase):
         type(diff).emailed = PropertyMock(return_value=False)
         sendgrid = SendgridHandler({})
 
-        self.assertRaises(SGConfigNotFoundError, sendgrid.publish_diff, diff, {})
+        self.assertRaises(SendgridConfigNotFoundError, sendgrid.publish_diff, diff, {})
         try:
             sendgrid.publish_diff(diff, self.config["sendgrid"])
-        except SGConfigNotFoundError:
+        except SendgridConfigNotFoundError:
             self.fail("sendgrid.publish_diff raised ConfigNotFoundError unexpectedly!")
 
     def test_raises_if_already_emailed(self):
@@ -572,7 +610,7 @@ class SendgridHandlerTest(TestCase):
 
         sendgrid = SendgridHandler(self.config["sendgrid"])
         self.assertRaises(
-            SGAlreadyEmailedError, sendgrid.publish_diff, diff, self.config["sendgrid"]
+            AlreadyEmailedError, sendgrid.publish_diff, diff, self.config["sendgrid"]
         )
 
     def test_raises_if_not_all_archive_urls_are_present(self):
@@ -580,18 +618,24 @@ class SendgridHandlerTest(TestCase):
 
         sendgrid = SendgridHandler(self.config["sendgrid"])
         self.assertRaises(
-            SGArchiveNotFoundError, sendgrid.publish_diff, diff, self.config["sendgrid"]
+            SendgridArchiveUrlNotFoundError,
+            sendgrid.publish_diff,
+            diff,
+            self.config["sendgrid"],
         )
 
         type(diff.old).archive_url = PropertyMock(return_value="http://test.url/old")
         self.assertRaises(
-            SGArchiveNotFoundError, sendgrid.publish_diff, diff, self.config["sendgrid"]
+            SendgridArchiveUrlNotFoundError,
+            sendgrid.publish_diff,
+            diff,
+            self.config["sendgrid"],
         )
 
         type(diff.new).archive_url = PropertyMock(return_value="http://test.url/new")
         try:
             sendgrid.publish_diff(diff, self.config["sendgrid"])
-        except SGArchiveNotFoundError:
+        except SendgridArchiveUrlNotFoundError:
             self.fail(
                 "sendgrid.publish_diff raised AchiveUrlNotFoundError unexpectedly!"
             )
