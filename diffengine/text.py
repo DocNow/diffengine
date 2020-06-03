@@ -1,4 +1,6 @@
 import logging
+import re
+import unicodedata
 
 
 def build_text(diff, lang={}):
@@ -72,3 +74,9 @@ def to_utf8(text):
         return text
 
     return result
+
+
+def matches(pattern, text):
+    nfkd_form = unicodedata.normalize("NFKD", text.upper())
+    normalized = u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
+    return re.search(pattern, normalized, re.I | re.M) is not None

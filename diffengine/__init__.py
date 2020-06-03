@@ -27,8 +27,8 @@ from datetime import datetime
 from diffengine.exceptions.webdriver import UnknownWebdriverError
 from diffengine.exceptions.sendgrid import SendgridConfigNotFoundError, SendgridError
 from diffengine.exceptions.twitter import TwitterConfigNotFoundError, TwitterError
-from diffengine.text import to_utf8
 from diffengine.sendgrid import SendgridHandler
+from diffengine.text import to_utf8, matches
 from diffengine.twitter import TwitterHandler
 from envyaml import EnvYAML
 from peewee import (
@@ -145,7 +145,7 @@ class Entry(BaseModel):
         logging.debug("%s not stale (r=%f)", self.url, r)
         return False
 
-    def get_latest(self):
+    def get_latest(self, skip_pattern=None):
         """
         get_latest is the heart of the application. It will get the current
         version on the web, extract its summary with readability and compare
@@ -178,6 +178,16 @@ class Entry(BaseModel):
         summary = doc.summary(html_partial=True)
         summary = bleach.clean(summary, tags=["p"], strip=True)
         summary = _normal(summary)
+
+        # if the title or the summay contains the skipping pattern,
+        # then return none as I don't want to report this change
+        if skip_pattern and (
+            matches(skip_pattern, title) or matches(skip_pattern, summary)
+        ):
+            logging.info(
+                "Skipped page. It matches the skip_pattern prop defined for this feed."
+            )
+            return None
 
         # in case there was a redirect, and remove utm style marketing
         canonical_url = _remove_utm(resp.url)
@@ -622,14 +632,15 @@ def main():
     browser.quit()
 
 
-def process_entry(entry, feed_config, twitter=None, sendgrid=None, lang={}):
+def process_entry(entry, feed_config={}, twitter=None, sendgrid=None, lang={}):
     result = {"skipped": 0, "checked": 0, "new": 0}
     if not entry.stale:
         result["skipped"] = 1
     else:
         result["checked"] = 1
         try:
-            version = entry.get_latest()
+            skip_pattern = feed_config.get("skip_pattern")
+            version = entry.get_latest(skip_pattern)
             if version:
                 result["new"] = 1
                 if version.diff:

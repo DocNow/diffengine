@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import yaml
 from envyaml import EnvYAML
 
 import setup
@@ -29,7 +28,7 @@ from diffengine import (
     SendgridHandler,
     _fingerprint,
 )
-from diffengine.text import build_text, to_utf8
+from diffengine.text import build_text, to_utf8, matches
 from diffengine.utils import generate_config
 from diffengine.exceptions.sendgrid import (
     SendgridConfigNotFoundError,
@@ -261,7 +260,7 @@ class EntryTest(TestCase):
         type(entry).stale = PropertyMock(return_value=False)
 
         # Test
-        result = process_entry(entry, None, None)
+        result = process_entry(entry, {}, None)
 
         # Assert
         assert result["skipped"] == 1
@@ -273,7 +272,7 @@ class EntryTest(TestCase):
         entry.get_latest = MagicMock(side_effect=Exception("TEST"))
 
         # Test
-        result = process_entry(entry, None, None)
+        result = process_entry(entry, {}, None)
 
         # Assert
         entry.get_latest.assert_called_once()
@@ -290,7 +289,7 @@ class EntryTest(TestCase):
         entry.get_latest = MagicMock(return_value=None)
 
         # Test
-        result = process_entry(entry, None, twitter)
+        result = process_entry(entry, {}, twitter)
 
         # Assert
         entry.get_latest.assert_called_once()
@@ -311,7 +310,7 @@ class EntryTest(TestCase):
         entry.get_latest = MagicMock(return_value=version)
 
         # Test
-        result = process_entry(entry, None, twitter)
+        result = process_entry(entry, {}, twitter)
 
         # Assert
         entry.get_latest.assert_called_once()
@@ -332,7 +331,7 @@ class EntryTest(TestCase):
         entry.get_latest = MagicMock(return_value=version)
 
         # Test
-        result = process_entry(entry, None, twitter)
+        result = process_entry(entry, {}, twitter)
 
         # Assert
         entry.get_latest.assert_called_once()
@@ -817,3 +816,37 @@ class EncodingTest(TestCase):
         text_utf8 = "Me preocupa más la parte futbolística"
         result = to_utf8(text_latin)
         self.assertEquals(result, text_utf8)
+
+
+class MatchesTest(TestCase):
+    skip_pattern = "subscribe.*\\d{2} articles"
+
+    def test_matches_does_not_match(self):
+        result = matches(
+            self.skip_pattern, "Hey! You need to subscribe to 1 article to continue"
+        )
+        self.assertFalse(result)
+
+    def test_matches_does_match(self):
+        result = matches(
+            self.skip_pattern, "Hey! You need to subscribe to 10 articles to continue"
+        )
+        self.assertTrue(result)
+
+    def test_matches_with_multiline(self):
+        result = matches(
+            self.skip_pattern, "Hey!\nYou need to subscribe to 10 articles\nto continue"
+        )
+        self.assertTrue(result)
+
+    def test_matches_is_case_insensitive(self):
+        result = matches(
+            self.skip_pattern, "Hey!\nYou need to SubsCribe to 10 ARTicles\nto continue"
+        )
+        self.assertTrue(result)
+
+    def test_matches_is_accent_insensitive(self):
+        result = matches(
+            self.skip_pattern, "Hey!\nYou need to SubsCribé to 10 ARTiclès\nto continue"
+        )
+        self.assertTrue(result)
