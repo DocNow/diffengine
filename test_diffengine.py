@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import yaml
 from envyaml import EnvYAML
 
 import setup
