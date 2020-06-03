@@ -184,6 +184,9 @@ class Entry(BaseModel):
         if skip_pattern and (
             matches(skip_pattern, title) or matches(skip_pattern, summary)
         ):
+            logging.info(
+                "Skipped page. It matches the skip_pattern prop defined for this feed."
+            )
             return None
 
         # in case there was a redirect, and remove utm style marketing
