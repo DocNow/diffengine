@@ -58,3 +58,17 @@ def build_with_default_content(diff):
         text = text[0:225] + "…"
     text += " " + diff.url
     return text
+
+
+def to_utf8(text):
+    for encoding in ["latin1", "ascii"]:
+        try:
+            result = text.encode(encoding).decode("utf8", "strict")
+            break
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            result = None
+
+    if result is None:
+        return text
+
+    return result
