@@ -88,30 +88,31 @@ Logs can be found in `diffengine.log` in the storage directory, for example
 Checkout [Ryan Baumann's "diffengine" Twitter list] for a list of known
 diffengine Twitter accounts that are out there.
 
-## Tweeting text options
+## Config options
 
-By default, the tweeted diff will include the article's title and the archive diff url, [like this](https://twitter.com/mp_diff/status/1255973684994625539).
+### Database engine
 
-You change this by tweeting what's changed: the url, the title and/or the summary. For doing so, you need to specify **all** the following `lang` keys:
+By default the database is configured for Sqlite and the file `./diffengine.db` through the `db` config prop
 
 ```yaml
-lang:
-  change_in: "Change in"
-  the_url: "the URL"
-  the_title: "the title"
-  and: "and"
-  the_summary: "the summary"
+db: sqlite:///diffengine.db
 ```
 
-Only if all the keys are defined, the tweet will include what's changed on its content, followed by the `diff.url`. Some examples:
+This value responds to the [database URL connection string format](http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#database-url).
 
-- "Change in the title"
-- "Change in the summary"
-- "Change in the title and the summary"
+For instance, you can co˚nnect to your postgresql database using something like this.
 
-And so on with all the possible combinations between url, title and summary
+```yaml
+db: postgresql://postgres:my_password@localhost:5432/my_database
+```
 
-## Multiple Accounts & Feed Implementation Example
+In case you store your database url connection into an environment var, like in Heroku. You can simply do as follows.
+
+```yaml
+db: "${DATABASE_URL}"
+```
+
+### Multiple Accounts & Feed Implementation Example
 
 If you are setting multiple accounts, and multiple feeds if may be helpful to setup a
 directory for each account. For example:
@@ -155,6 +156,29 @@ twitter:
   consumer_secret: CONSUMER_SECRET
 ```
 
+### Tweet content
+
+By default, the tweeted diff will include the article's title and the archive diff url, [like this](https://twitter.com/mp_diff/status/1255973684994625539).
+
+You change this by tweeting what's changed: the url, the title and/or the summary. For doing so, you need to specify **all** the following `lang` keys:
+
+```yaml
+lang:
+  change_in: "Change in"
+  the_url: "the URL"
+  the_title: "the title"
+  and: "and"
+  the_summary: "the summary"
+```
+
+Only if all the keys are defined, the tweet will include what's changed on its content, followed by the `diff.url`. Some examples:
+
+- "Change in the title"
+- "Change in the summary"
+- "Change in the title and the summary"
+
+And so on with all the possible combinations between url, title and summary
+
 ### Support for environment vars
 
 The configuration file has support for [environment variables](https://medium.com/chingu/an-introduction-to-environment-variables-and-how-to-use-them-f602f66d15fa). This is useful if you want to keeping your credentials secure when deploying to Heroku, Vercel (former ZEIT Now), AWS, Azure, Google Cloud or any other similar services. The environment variables are defined on the app of the platform you use or directly in a [dotenv file](https://12factor.net/config), which is the usual case when coding locally.
@@ -176,7 +200,7 @@ MY_CONSUMER_SECRET_ENV_VAR="CONSUMER_SECRET"
 
 Done! You can use diffengine as usual and keep your credentials safe.
 
-## Adding a Twitter account when the configuration file is already created
+### Adding a Twitter account when the configuration file is already created
 
 You can use the following command for adding Twitter accounts to the config file.
 

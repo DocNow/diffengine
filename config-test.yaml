@@ -1,0 +1,7 @@
+db: ${TEST_DATABASE_URL}
+twitter:
+  consumer_key: ${TEST_CONSUMER_KEY}
+  consumer_secret: ${TEST_CONSUMER_SECRET}
+  token:
+    access_token: ${TEST_ACCESS_TOKEN}
+    access_token_secret: ${TEST_ACCESS_TOKEN_SECRET}

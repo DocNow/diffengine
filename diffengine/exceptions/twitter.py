@@ -2,7 +2,7 @@ class TwitterError(RuntimeError):
     pass
 
 
-class ConfigNotFoundError(TwitterError):
+class TwitterConfigNotFoundError(TwitterError):
     """Exception raised if the Twitter instance has not the required key and secret"""
 
     def __init__(self):
@@ -21,7 +21,7 @@ class AlreadyTweetedError(TwitterError):
         self.message = "diff %s has already been tweeted" % diff.id
 
 
-class AchiveUrlNotFoundError(TwitterError):
+class TwitterAchiveUrlNotFoundError(TwitterError):
     def __init__(self, diff):
         self.message = "not tweeting without archive urls for diff %s" % diff.id
 
