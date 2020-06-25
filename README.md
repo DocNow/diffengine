@@ -25,7 +25,7 @@ regular updates. And with the [readability] module, diffengine is able to
 automatically extract the primary content of pages, without requiring special
 parsing to remove boilerplate material. And like NYTDiff, instead of creating
 another website for people to watch, diffengine pushes updates out to social
-media where people are already, while also building a local database of diffs
+media (via Twitter or email) where people are already, while also building a local database of diffs
 that can be used for research purposes.
 
 ## Install
@@ -42,7 +42,9 @@ directory in my home directory, but you can use whatever location you want, you
 just need to be able to write to it.
 
 The first time you run diffengine it will prompt you to enter an RSS or Atom
-feed URL to monitor and will authenticate with Twitter.
+feed URL to monitor. You will the be asked to provide the credentials to
+publish the diffs in social media.
+
 
 ```console
 % diffengine /home/ed/.diffengine
@@ -64,6 +66,16 @@ Visit https://api.twitter.com/oauth/authorize?oauth_token=NRW9BQAAAAAAyqBnAAXXYY
 What is your PIN: 8675309
 
 Saved your configuration in /home/ed/.diffengine/config.yaml
+
+Would you like to set up emailing edits with Sendgrid? [Y/n] y
+
+Go to https://app.sendgrid.com/ and get an API key.
+
+What is the API key? <API_KEY>
+
+What email address is sending the email? <FROM_ADDRESS>
+
+Who are the recipients of the emails?  <RECEIVERS ADDRESSES_CSV>
 
 Fetching initial set of entries.
 
@@ -140,11 +152,17 @@ If there are multiple feeds for an account, you can setup the `config.yml` like 
   twitter:
     access_token: ACCESS_TOKEN
     access_token_secret: ACCESS_TOKEN_SECRET
+  sendgrid:
+    sender: FROM_ADDRESS
+    recipients: TO_ADDRES1, TO_ADDRESS2
   url: http://www.theglobeandmail.com/report-on-business/?service=rss
 - name: The Globe and Mail - Opinion
   twitter:
     access_token: ACCESS_TOKEN
     access_token_secret: ACCESS_TOKEN_SECRET
+  sendgrid:
+    sender: FROM_ADDRESS2
+    recipients: TO_ADDRES3, TO_ADDRESS4
   url: http://www.theglobeandmail.com/opinion/?service=rss
 - name: The Globe and Mail - News
   twitter:
@@ -154,6 +172,8 @@ If there are multiple feeds for an account, you can setup the `config.yml` like 
 twitter:
   consumer_key: CONSUMER_KEY
   consumer_secret: CONSUMER_SECRET
+sendgrid:
+  api_token: API_TOKEN
 ```
 
 ### Skip entry

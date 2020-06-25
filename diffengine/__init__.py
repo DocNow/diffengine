@@ -476,16 +476,16 @@ def get_initial_config():
             "access_token_secret": token[1],
         }
 
-    answer = input("Would you like to set up emailing edits? [Y/n] ")
+    answer = input("Would you like to set up emailing edits with Sendgrid? [Y/n] ")
     if answer.lower() == "y":
         print("Go to https://app.sendgrid.com/ and get an API key.")
         api_key = input("What is the API key? ")
         sender = input("What email address is sending the email? ")
-        receivers = input("Who are receiving the emails?  ")
+        recipients = input("Who are the recipients of the emails?  ")
 
         config["sendgrid"] = {"api_key": api_key}
 
-        config["feeds"][0]["sendgrid"] = {"sender": sender, "receivers": receivers}
+        config["feeds"][0]["sendgrid"] = {"sender": sender, "recipients": recipients}
 
     print("Saved your configuration in %s/config.yaml" % home.rstrip("/"))
     print("Fetching initial set of entries.")

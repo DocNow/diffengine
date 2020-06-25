@@ -377,7 +377,7 @@ class EntryTest(TestCase):
         sendgrid_config = {
             "api_token": "12345",
             "sender": "test@test.test",
-            "receivers": "test@test.test",
+            "recipients": "test@test.test",
         }
         result = process_entry(entry, {"sendgrid": sendgrid_config}, None, sendgrid)
 
@@ -582,7 +582,7 @@ class SendgridHandlerTest(TestCase):
         "sendgrid": {
             "api_token": "12345",
             "sender": "test@test.test",
-            "receivers": "test@test.test",
+            "recipients": "test@test.test, test2@test.test",
         }
     }
 
@@ -638,6 +638,26 @@ class SendgridHandlerTest(TestCase):
             self.fail(
                 "sendgrid.publish_diff raised AchiveUrlNotFoundError unexpectedly!"
             )
+
+    def test_only_one_recipient(self):
+        config = {
+            "sendgrid": {
+                "api_token": "12345",
+                "sender": "sender@test.test",
+                "recipients": "recipient@test.test",
+            }
+        }
+
+        sendgrid = SendgridHandler(config["sendgrid"])
+
+        diff = get_mocked_diff(False)
+        type(diff.old).archive_url = PropertyMock(return_value="http://test.url/old")
+        type(diff.new).archive_url = PropertyMock(return_value="http://test.url/new")
+
+        try:
+            sendgrid.publish_diff(diff, config["sendgrid"])
+        except Exception as e:
+            self.fail(e)
 
 
 def get_mocked_diff(with_archive_urls=True):

@@ -1,7 +1,7 @@
 import logging
 
 from datetime import datetime
-from sendgrid import Mail, SendGridAPIClient
+from sendgrid import Mail, Bcc, SendGridAPIClient
 
 from diffengine.exceptions.sendgrid import (
     AlreadyEmailedError,
@@ -13,21 +13,25 @@ from diffengine.exceptions.sendgrid import (
 class SendgridHandler:
     api_token = None
     sender = None
-    receivers = None
+    recipients = None
 
     def __init__(self, config):
 
-        if not all(["api_token" in config, "sender" in config, "receivers" in config]):
+        if not all(["api_token" in config, "sender" in config, "recipients" in config]):
             logging.warning(
                 "No global config found for sendgrid, expecting config set for each feed"
             )
 
         self.api_token = config.get("api_token")
         self.sender = config.get("sender")
-        self.receivers = config.get("receivers")
+        self.recipients = self.build_recipients(config.get("recipients"))
 
     def mailer(self, api_token):
         return SendGridAPIClient(api_token)
+
+    def build_recipients(self, recipients):
+        if recipients:
+            return [x.strip() for x in recipients.split(",")]
 
     def build_subject(self, diff):
         return diff.old.title
@@ -47,18 +51,24 @@ class SendgridHandler:
 
         api_token = feed_config.get("api_token", self.api_token)
         sender = feed_config.get("sender", self.sender)
-        receivers = feed_config.get("receivers", self.receivers)
-        if not all([api_token, sender, receivers]):
+
+        recipients = None
+        if feed_config.get("recipients"):
+            recipients = self.build_recipients(feed_config.get("recipients"))
+        else:
+            recipients = self.recipients
+        if not all([api_token, sender, recipients]):
             raise SendgridConfigNotFoundError
 
         subject = self.build_subject(diff)
         message = Mail(
             from_email=sender,
-            to_emails=receivers,
             subject=subject,
+            to_emails=recipients.pop(0),
             html_content=self.build_html_body(diff),
         )
-
+        if recipients:
+            message.bcc = recipients
         try:
             self.mailer(api_token).send(message)
             diff.emailed = datetime.utcnow()
